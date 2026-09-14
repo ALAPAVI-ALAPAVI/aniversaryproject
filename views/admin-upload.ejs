@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Upload - Video Archive</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white flex min-h-screen">
+  <div class="w-64 bg-gray-800 p-6 flex flex-col justify-between">
+    <div>
+      <h1 class="text-xl font-bold mb-8 text-blue-400">Admin Console</h1>
+      <nav class="space-y-4">
+        <a href="/admin/library" class="block py-2 px-4 hover:bg-gray-700 rounded text-gray-300 transition">Library</a>
+        <a href="/admin/upload" class="block py-2 px-4 bg-gray-700 rounded text-blue-300 font-medium">Upload</a>
+        <a href="/admin/account" class="block py-2 px-4 hover:bg-gray-700 rounded text-gray-300 transition">Account</a>
+      </nav>
+    </div>
+  </div>
+  <div class="flex-1 p-10 max-w-2xl">
+    <h2 class="text-3xl font-bold mb-6">Upload Video</h2>
+    <% if (message) { %>
+      <div class="bg-blue-600 text-white p-3 rounded mb-6 text-sm"><%= message %></div>
+    <% } %>
+    <div class="bg-gray-800 p-6 rounded-lg mb-8">
+      <h3 class="text-xl font-semibold mb-4">Option 1: Device Storage</h3>
+      <form action="/admin/upload/file" method="POST" enctype="multipart/form-data" class="space-y-4">
+        <div>
+          <input type="file" name="video" accept="video/*" required class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700">
+        </div>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded font-semibold transition">Upload & Convert File</button>
+      </form>
+    </div>
+    <div class="bg-gray-800 p-6 rounded-lg">
+      <h3 class="text-xl font-semibold mb-4">Option 2: Direct Video URL</h3>
+      <form action="/admin/upload/url" method="POST" class="space-y-4">
+        <div>
+          <label class="block text-sm mb-1">Video Title</label>
+          <input type="text" name="title" required placeholder="My External Video" class="w-full p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block text-sm mb-1">Direct Video Link (URL)</label>
+          <input type="url" name="videoUrl" required placeholder="https://example.com/video.mp4" class="w-full p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:border-blue-500">
+        </div>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded font-semibold transition">Import & Convert URL</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

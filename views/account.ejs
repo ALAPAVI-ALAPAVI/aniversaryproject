@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Account - Video Archive</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col">
+  <% if (isAdmin) { %>
+    <div class="flex min-h-screen">
+      <div class="w-64 bg-gray-800 p-6 flex flex-col justify-between">
+        <div>
+          <h1 class="text-xl font-bold mb-8 text-blue-400">Admin Console</h1>
+          <nav class="space-y-4">
+            <a href="/admin/library" class="block py-2 px-4 hover:bg-gray-700 rounded text-gray-300 transition">Library</a>
+            <a href="/admin/upload" class="block py-2 px-4 hover:bg-gray-700 rounded text-gray-300 transition">Upload</a>
+            <a href="/admin/account" class="block py-2 px-4 bg-gray-700 rounded text-blue-300 font-medium">Account</a>
+          </nav>
+        </div>
+      </div>
+      <div class="flex-1 p-10">
+        <h2 class="text-3xl font-bold mb-6">Admin Account Details</h2>
+        <div class="bg-gray-800 p-6 rounded-lg max-w-md space-y-4">
+          <p><strong>Username:</strong> <%= user.username %></p>
+          <p><strong>Role:</strong> <%= user.role %></p>
+          <a href="/logout" class="inline-block bg-red-600 hover:bg-red-700 px-4 py-2 rounded font-semibold transition">Logout</a>
+        </div>
+      </div>
+    </div>
+  <% } else { %>
+    <nav class="bg-gray-800 p-4 flex justify-between items-center px-8 border-b border-gray-700">
+      <div class="font-bold text-xl text-blue-400">User Portal</div>
+      <div class="space-x-6">
+        <a href="/user/view" class="text-gray-300 hover:text-white transition">View Tab</a>
+        <a href="/user/account" class="text-blue-300 font-medium">Account Tab</a>
+      </div>
+    </nav>
+    <div class="flex-1 flex flex-col items-center justify-center p-6">
+      <div class="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md space-y-4">
+        <h2 class="text-2xl font-bold border-b border-gray-700 pb-2">User Account</h2>
+        <p><strong>Username:</strong> <%= user.username %></p>
+        <p><strong>Role:</strong> <%= user.role %></p>
+        <div class="pt-4">
+          <a href="/logout" class="inline-block w-full text-center bg-red-600 hover:bg-red-700 p-2 rounded font-semibold transition">Logout</a>
+        </div>
+      </div>
+    </div>
+  <% } %>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Library - Video Archive</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white flex min-h-screen">
+  <div class="w-64 bg-gray-800 p-6 flex flex-col justify-between">
+    <div>
+      <h1 class="text-xl font-bold mb-8 text-blue-400">Admin Console</h1>
+      <nav class="space-y-4">
+        <a href="/admin/library" class="block py-2 px-4 bg-gray-700 rounded text-blue-300 font-medium">Library</a>
+        <a href="/admin/upload" class="block py-2 px-4 hover:bg-gray-700 rounded text-gray-300 transition">Upload</a>
+        <a href="/admin/account" class="block py-2 px-4 hover:bg-gray-700 rounded text-gray-300 transition">Account</a>
+      </nav>
+    </div>
+  </div>
+  <div class="flex-1 p-10">
+    <h2 class="text-3xl font-bold mb-6">Video Library</h2>
+    <% if (videos.length === 0) { %>
+      <p class="text-gray-400">No videos uploaded yet.</p>
+    <% } else { %>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <% videos.forEach(video => { %>
+          <div class="bg-gray-800 p-4 rounded-lg flex flex-col justify-between">
+            <div>
+              <h3 class="text-lg font-semibold truncate"><%= video.title %></h3>
+              <p class="text-xs text-gray-400 mb-4">Uploaded: <%= video.createdAt %></p>
+              <video controls class="w-full rounded mb-4 bg-black">
+                <source src="/uploads/<%= video.filename %>" type="video/mp4">
+              </video>
+            </div>
+            <div class="space-y-2">
+              <form action="/admin/generate-access/<%= video.id %>" method="POST">
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded text-sm transition">Generate Access QR / Link</button>
+              </form>
+              <form action="/admin/delete/<%= video.id %>" method="POST">
+                <button type="submit" class="w-full bg-red-600 hover:bg-red-700 py-2 rounded text-sm transition">Delete Video</button>
+              </form>
+              <% Object.keys(tokens).forEach(t => { %>
+                <% if (tokens[t].videoId === video.id) { %>
+                  <div class="mt-4 p-3 bg-gray-700 rounded text-xs space-y-2">
+                    <p class="font-bold text-green-400">Active Link Token Generated:</p>
+                    <input type="text" readonly value="<%= tokens[t].accessUrl %>" class="w-full p-1 bg-gray-900 rounded text-gray-300 border border-gray-600">
+                    <div class="flex justify-center pt-2">
+                      <img src="<%= tokens[t].qrCodeDataUrl %>" alt="QR Code" class="w-28 h-28 rounded bg-white p-1">
+                    </div>
+                  </div>
+                <% } %>
+              <% }); %>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+  </div>
+</body>
+</html>
