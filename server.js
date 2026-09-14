@@ -68,18 +68,14 @@ function downloadFile(url, dest) {
         return reject(new Error(`Failed to download: ${response.statusCode}`));
       }
       response.pipe(file);
-      file.on('finish', () => {
-        file.close(resolve);
-      });
+      file.on('finish', () => file.close(resolve));
     }).on('error', (err) => {
       fs.unlink(dest, () => reject(err));
     });
   });
 }
 
-app.get('/login', (req, res) => {
-  res.render('login', { error: null });
-});
+app.get('/login', (req, res) => res.render('login', { error: null }));
 
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
@@ -92,9 +88,7 @@ app.post('/login', (req, res) => {
 });
 
 app.get('/logout', (req, res) => {
-  req.session.destroy(() => {
-    res.redirect('/login');
-  });
+  req.session.destroy(() => res.redirect('/login'));
 });
 
 app.get('/', requireAuth, (req, res) => {
@@ -178,7 +172,8 @@ app.post('/admin/delete/:id', requireAuth, requireAdmin, (req, res) => {
 app.post('/admin/generate-access/:id', requireAuth, requireAdmin, async (req, res) => {
   const videoId = req.params.id;
   const token = uuidv4();
-  const accessUrl = `http://${req.headers.host}/watch?token=${token}`;
+  const protocol = req.headers['x-forwarded-proto'] || 'http';
+  const accessUrl = `${protocol}://${req.headers.host}/watch?token=${token}`;
   
   try {
     const qrCodeDataUrl = await QRCode.toDataURL(accessUrl);
@@ -188,6 +183,18 @@ app.post('/admin/generate-access/:id', requireAuth, requireAdmin, async (req, re
     console.error(err);
     res.status(500).send('Error generating access QR code.');
   }
+});
+
+app.get('/download/:id', requireAuth, (req, res) => {
+  const video = videos.find(v => v.id === req.params.id);
+  if (!video) return res.status(404).send('Video not found.');
+
+  const filePath = path.join(__dirname, 'public/uploads', video.filename);
+  res.download(filePath, `${video.title || 'video'}.mp4`, (err) => {
+    if (err && !res.headersSent) {
+      res.status(500).send('Error downloading file.');
+    }
+  });
 });
 
 app.get('/admin/account', requireAuth, requireAdmin, (req, res) => {
@@ -207,7 +214,7 @@ app.get('/watch', requireAuth, (req, res) => {
   const accessData = accessTokens[token];
 
   if (!accessData) {
-    return res.render('user-view', { user: req.session.user, error: 'Invalid or expired video link/QR code access token.' });
+    return res.render('user-view', { user: req.session.user, error: 'Invalid or expired access token.' });
   }
 
   const video = videos.find(v => v.id === accessData.videoId);
@@ -218,6 +225,4 @@ app.get('/watch', requireAuth, (req, res) => {
   res.render('watch', { user: req.session.user, video });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));

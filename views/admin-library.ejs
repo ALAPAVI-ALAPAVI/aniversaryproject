@@ -32,6 +32,7 @@
               </video>
             </div>
             <div class="space-y-2">
+              <a href="/download/<%= video.id %>" class="block text-center w-full bg-green-600 hover:bg-green-700 py-2 rounded text-sm font-semibold transition">Download Video</a>
               <form action="/admin/generate-access/<%= video.id %>" method="POST">
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded text-sm transition">Generate Access QR / Link</button>
               </form>
