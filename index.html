@@ -464,7 +464,8 @@
 <script>
     const ADMIN_PASSWORD = "admin";
     const LIBRARY_KEY = "retro_lyric_library";
-    const CLOUD_URL = "https://api.npoint.io/46f8ee44111326462db8";
+    const CLOUD_URL = "https://keyvalue.immanuel.co/api/KeyVal/GetValue/aniversaryproject_live_sync/broadcast";
+    const CLOUD_SET_URL = "https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/aniversaryproject_live_sync/broadcast/";
 
     const rolePage = document.getElementById('role-page');
     const viewerAuthPage = document.getElementById('viewer-auth-page');
@@ -538,10 +539,9 @@
 
     async function pushToCloud(data) {
         try {
-            await fetch(CLOUD_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+            const encodedData = encodeURIComponent(JSON.stringify(data));
+            await fetch(CLOUD_SET_URL + encodedData, {
+                method: 'POST'
             });
             adminStatusText.innerText = "BROADCAST SERVER: ONLINE";
             adminStatusText.style.color = "#00ffcc";
@@ -555,8 +555,9 @@
         try {
             const res = await fetch(CLOUD_URL + '?nocache=' + Date.now());
             if (res.ok) {
-                const data = await res.json();
-                if (data) {
+                const text = await res.text();
+                if (text) {
+                    const data = JSON.parse(text);
                     viewerStatusText.innerText = "NETWORK: STREAM LIVE";
                     viewerStatusText.style.color = "#00ffcc";
                     checkAndApplyViewerAuth(activePass, data);
