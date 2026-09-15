@@ -94,8 +94,8 @@
 
         .display-screen {
             width: 100%;
-            min-height: 250px;
-            max-height: 380px;
+            min-height: 220px;
+            max-height: 320px;
             background-color: var(--display-bg);
             border: 3px solid var(--border-red);
             padding: 20px;
@@ -110,17 +110,17 @@
             box-shadow: inset 0 0 15px rgba(255, 26, 64, 0.25);
         }
 
-        .display-screen::-webkit-scrollbar {
-            width: 10px;
+        .display-screen::-webkit-scrollbar, .library-list::-webkit-scrollbar {
+            width: 8px;
         }
 
-        .display-screen::-webkit-scrollbar-track {
+        .display-screen::-webkit-scrollbar-track, .library-list::-webkit-scrollbar-track {
             background: #000000;
         }
 
-        .display-screen::-webkit-scrollbar-thumb {
+        .display-screen::-webkit-scrollbar-thumb, .library-list::-webkit-scrollbar-thumb {
             background: var(--dark-red);
-            border: 2px solid var(--border-red);
+            border: 1px solid var(--border-red);
         }
 
         .input-field {
@@ -132,13 +132,13 @@
             background-color: #000000;
             color: var(--input-text);
             outline: none;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             box-shadow: inset 0 0 10px rgba(255, 26, 64, 0.3);
             text-align: center;
         }
 
         .text-area-input {
-            height: 120px;
+            height: 100px;
             resize: vertical;
             text-align: left;
             line-height: 1.5;
@@ -155,14 +155,16 @@
 
         .controls {
             display: flex;
-            gap: 15px;
+            gap: 12px;
             margin-top: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         button {
             font-family: 'Press Start 2P', monospace;
-            padding: 12px 20px;
-            font-size: 0.7rem;
+            padding: 10px 16px;
+            font-size: 0.65rem;
             border: 2px solid var(--border-red);
             background-color: var(--dark-red);
             color: #ffffff;
@@ -181,7 +183,7 @@
             box-shadow: 1px 1px 0px #000;
         }
 
-        .preview-title {
+        .section-title {
             align-self: flex-start;
             font-size: 0.7rem;
             color: var(--bright-red);
@@ -194,6 +196,52 @@
             font-size: 0.65rem;
             margin-bottom: 15px;
             text-align: center;
+        }
+
+        /* Library Styling */
+        .library-container {
+            width: 100%;
+            border: 2px solid var(--dark-red);
+            background-color: #000000;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .library-list {
+            max-height: 150px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .library-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #120202;
+            border: 1px solid var(--border-red);
+            padding: 8px 12px;
+            font-size: 0.65rem;
+        }
+
+        .library-item-title {
+            color: var(--bright-red);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .library-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .library-actions button {
+            padding: 6px 10px;
+            font-size: 0.55rem;
         }
     </style>
 </head>
@@ -246,14 +294,23 @@
     <div id="admin-ui" class="view-section hidden">
         <h1>[ADMIN TERMINAL]</h1>
         
-        <div class="preview-title">LIVE PREVIEW SCREEN:</div>
+        <div class="section-title">LIVE PREVIEW SCREEN:</div>
         <div id="admin-preview-display" class="display-screen">Awaiting broadcast...</div>
 
-        <textarea id="admin-text-input" class="input-field text-area-input" placeholder="PASTE OR TYPE LYRICS HERE..."></textarea>
+        <!-- LIBRARY SECTION -->
+        <div class="section-title">LYRIC LIBRARY:</div>
+        <div class="library-container">
+            <div id="library-list" class="library-list"></div>
+            <input type="text" id="song-title-input" class="input-field" placeholder="TITLE / SONG NAME" style="text-align: left; margin-bottom: 8px;">
+            <textarea id="admin-text-input" class="input-field text-area-input" placeholder="PASTE OR TYPE LYRICS HERE..."></textarea>
+            <div class="controls" style="margin-top: 5px;">
+                <button id="save-library-btn">SAVE TO LIBRARY</button>
+                <button id="broadcast-btn">BROADCAST LYRICS</button>
+                <button id="admin-clear-btn">CLEAR</button>
+            </div>
+        </div>
         
         <div class="controls">
-            <button id="broadcast-btn">BROADCAST LYRICS</button>
-            <button id="admin-clear-btn">CLEAR</button>
             <button id="admin-logout-btn">LOGOUT</button>
         </div>
     </div>
@@ -265,11 +322,12 @@
     const VIEWER_PASSWORD = "viewer";
     const ADMIN_PASSWORD = "admin";
 
-    // Speed setting for typewriter (~20ms)
-    const TYPING_SPEED = 20;
+    // Slowed-down typewriter pace (75ms per character)
+    const TYPING_SPEED = 75;
 
-    // Local Storage Key for persistent sync across tabs
-    const STORAGE_KEY = "retro_lyric_broadcast";
+    // Storage Keys
+    const BROADCAST_KEY = "retro_lyric_broadcast";
+    const LIBRARY_KEY = "retro_lyric_library";
 
     // View Elements
     const rolePage = document.getElementById('role-page');
@@ -295,7 +353,10 @@
     const viewerDisplay = document.getElementById('viewer-display');
     const adminPreviewDisplay = document.getElementById('admin-preview-display');
     const adminTextInput = document.getElementById('admin-text-input');
+    const songTitleInput = document.getElementById('song-title-input');
+    const libraryList = document.getElementById('library-list');
     
+    const saveLibraryBtn = document.getElementById('save-library-btn');
     const broadcastBtn = document.getElementById('broadcast-btn');
     const adminClearBtn = document.getElementById('admin-clear-btn');
     const adminLogoutBtn = document.getElementById('admin-logout-btn');
@@ -343,6 +404,68 @@
         }
     }
 
+    // Library Functions
+    function getLibrary() {
+        const saved = localStorage.getItem(LIBRARY_KEY);
+        return saved ? JSON.parse(saved) : [];
+    }
+
+    function saveLibrary(library) {
+        localStorage.setItem(LIBRARY_KEY, JSON.stringify(library));
+        renderLibrary();
+    }
+
+    function renderLibrary() {
+        const library = getLibrary();
+        libraryList.innerHTML = '';
+
+        if (library.length === 0) {
+            libraryList.innerHTML = '<div style="font-size:0.6rem; color:var(--text-dim); text-align:center;">NO SAVED LYRICS IN LIBRARY</div>';
+            return;
+        }
+
+        library.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = 'library-item';
+            div.innerHTML = `
+                <span class="library-item-title">${item.title}</span>
+                <div class="library-actions">
+                    <button onclick="loadLibraryItem(${index})">LOAD</button>
+                    <button onclick="deleteLibraryItem(${index})">DELETE</button>
+                </div>
+            `;
+            libraryList.appendChild(div);
+        });
+    }
+
+    window.loadLibraryItem = (index) => {
+        const library = getLibrary();
+        const item = library[index];
+        if (item) {
+            songTitleInput.value = item.title;
+            adminTextInput.value = item.text;
+        }
+    };
+
+    window.deleteLibraryItem = (index) => {
+        const library = getLibrary();
+        library.splice(index, 1);
+        saveLibrary(library);
+    };
+
+    saveLibraryBtn.addEventListener('click', () => {
+        const title = songTitleInput.value.trim() || 'UNTITLED';
+        const text = adminTextInput.value.trim();
+
+        if (!text) return;
+
+        const library = getLibrary();
+        library.push({ title, text });
+        saveLibrary(library);
+
+        songTitleInput.value = '';
+    });
+
     // Role Navigation
     selectViewerBtn.addEventListener('click', () => {
         hideAllPages();
@@ -375,7 +498,7 @@
         if (viewerPassInput.value === VIEWER_PASSWORD) {
             hideAllPages();
             viewerUi.classList.remove('hidden');
-            const currentBroadcast = localStorage.getItem(STORAGE_KEY) || "Awaiting broadcast...";
+            const currentBroadcast = localStorage.getItem(BROADCAST_KEY) || "Awaiting broadcast...";
             renderBroadcast(currentBroadcast);
         } else {
             viewerAuthError.classList.remove('hidden');
@@ -386,7 +509,8 @@
         if (adminPassInput.value === ADMIN_PASSWORD) {
             hideAllPages();
             adminUi.classList.remove('hidden');
-            const currentBroadcast = localStorage.getItem(STORAGE_KEY) || "Awaiting broadcast...";
+            renderLibrary();
+            const currentBroadcast = localStorage.getItem(BROADCAST_KEY) || "Awaiting broadcast...";
             adminTextInput.value = currentBroadcast === "Awaiting broadcast..." ? "" : currentBroadcast;
             renderBroadcast(currentBroadcast);
         } else {
@@ -410,20 +534,21 @@
     // Admin Broadcast Action
     broadcastBtn.addEventListener('click', () => {
         const text = adminTextInput.value.trim() === '' ? 'Awaiting broadcast...' : adminTextInput.value;
-        localStorage.setItem(STORAGE_KEY, text);
+        localStorage.setItem(BROADCAST_KEY, text);
         renderBroadcast(text);
     });
 
     adminClearBtn.addEventListener('click', () => {
         adminTextInput.value = '';
+        songTitleInput.value = '';
         const defaultText = 'Awaiting broadcast...';
-        localStorage.setItem(STORAGE_KEY, defaultText);
+        localStorage.setItem(BROADCAST_KEY, defaultText);
         renderBroadcast(defaultText);
     });
 
     // Listen for storage updates across tabs/windows in real time
     window.addEventListener('storage', (e) => {
-        if (e.key === STORAGE_KEY) {
+        if (e.key === BROADCAST_KEY) {
             renderBroadcast(e.newValue || 'Awaiting broadcast...');
         }
     });
