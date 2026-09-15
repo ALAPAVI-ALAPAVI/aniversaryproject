@@ -22,7 +22,6 @@
 
         * {
             box-sizing: border-box;
-            image-rendering: pixelated;
             -webkit-tap-highlight-color: transparent;
         }
 
@@ -136,18 +135,18 @@
 
         .display-screen {
             width: 100%;
-            min-height: 180px;
-            max-height: 40vh;
+            min-height: 200px;
+            max-height: 50vh;
             background-color: #050206;
             border: 2px solid var(--pink-accent);
             padding: 15px;
             overflow-y: auto;
             white-space: pre-wrap;
             word-wrap: break-word;
-            font-size: clamp(0.7rem, 2.5vw, 0.85rem);
+            font-size: clamp(0.75rem, 3vw, 0.95rem);
             line-height: 1.8;
-            color: var(--text-bright);
-            text-shadow: 0 0 5px var(--text-bright), 0 0 10px var(--pink-accent);
+            color: #ffffff;
+            text-shadow: 0 0 5px #ffffff, 0 0 10px var(--pink-accent);
             margin-bottom: 15px;
             box-shadow: inset 0 0 15px rgba(255, 59, 141, 0.3);
             position: relative;
@@ -466,10 +465,8 @@
 
 <script>
     const ADMIN_PASSWORD = "admin";
-    const TYPING_SPEED = 60;
+    const TYPING_SPEED = 20;
     const LIBRARY_KEY = "retro_lyric_library";
-    const BIN_ID_KEY = "cyber_jsonbin_id";
-    const BIN_KEY_VAL = "$2a$10$wU0uG64fWJ6M5r9eK2XJ4uV7XQ7t0K6xN8N1F1Y5Q6G8H9I0J1K2L3"; // JSONBin API endpoint key format
 
     const rolePage = document.getElementById('role-page');
     const viewerAuthPage = document.getElementById('viewer-auth-page');
@@ -519,7 +516,6 @@
     let adminConnections = [];
     let viewerConnection = null;
     let currentBroadcastData = { text: "Awaiting broadcast stream...", password: "" };
-    let pollInterval = null;
 
     function hideAllPages() {
         rolePage.classList.add('hidden');
@@ -527,6 +523,11 @@
         adminAuthPage.classList.add('hidden');
         viewerUi.classList.add('hidden');
         adminUi.classList.add('hidden');
+    }
+
+    function renderTextDirectly(element, text) {
+        element.innerText = text || "Awaiting broadcast stream...";
+        element.scrollTop = element.scrollHeight;
     }
 
     function startTypewriter(element, text, intervalRefSetter) {
@@ -554,29 +555,23 @@
         const text = (broadcastData && broadcastData.text) ? broadcastData.text : "Awaiting broadcast stream...";
 
         if (!viewerUi.classList.contains('hidden')) {
-            startTypewriter(viewerDisplay, text, (inv) => viewerTypeInterval = inv);
+            renderTextDirectly(viewerDisplay, text);
         }
 
         if (!adminUi.classList.contains('hidden')) {
-            startTypewriter(adminPreviewDisplay, text, (inv) => adminTypeInterval = inv);
+            renderTextDirectly(adminPreviewDisplay, text);
         }
     }
 
-    // Hybrid Cloud Sync via JSONBin / Public Endpoint Fallback
-    async function syncToCloud(payload) {
-        try {
-            const res = await fetch('https://api.myjson.online/v1/records', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ jsonData: payload })
-            });
-            const json = await res.json();
-            if (json && json.id) {
-                localStorage.setItem('cyber_active_bin', json.id);
-            }
-        } catch(e) {
-            console.log('Cloud sync error fallback');
-        }
+    function fetchRelayCloudSync(pass) {
+        fetch('https://kvdb.io/4y9UqTq274Tj9wZqF979Jk/current_lyric')
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.text) {
+                    checkAndApplyViewerAuth(pass, data);
+                }
+            })
+            .catch(() => {});
     }
 
     function broadcastToRemoteViewers(data) {
@@ -589,7 +584,11 @@
             }
         });
 
-        syncToCloud(data);
+        fetch('https://kvdb.io/4y9UqTq274Tj9wZqF979Jk/current_lyric', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }).catch(() => {});
+
         renderBroadcast(data);
     }
 
@@ -598,24 +597,7 @@
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
                 { urls: 'stun:stun1.l.google.com:19302' },
-                { urls: 'stun:stun2.l.google.com:19302' },
-                { urls: 'stun:stun3.l.google.com:19302' },
-                { urls: 'stun:stun4.l.google.com:19302' },
-                {
-                    urls: 'turn:openrelay.metered.ca:80',
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
-                },
-                {
-                    urls: 'turn:openrelay.metered.ca:443',
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
-                },
-                {
-                    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
-                }
+                { urls: 'stun:stun2.l.google.com:19302' }
             ]
         };
     }
@@ -625,8 +607,7 @@
             try { peer.destroy(); } catch(e) {}
         }
 
-        const roomHash = Math.abs(window.location.origin.split('').reduce((a,b)=>{a=((a<<5)-a)+b.charCodeAt(0);return a&a},0)).toString(36);
-        const hostPeerId = "cyber-lyric-host-v2-" + roomHash;
+        const hostPeerId = "cyber-lyric-global-room-2026";
 
         peer = new Peer(hostPeerId, {
             debug: 1,
@@ -651,30 +632,9 @@
         });
 
         peer.on('error', (err) => {
-            if (err.type === 'unavailable-id') {
-                adminStatusText.innerText = "BROADCAST SERVER: ACTIVE (HOST)";
-                adminStatusText.style.color = "#00ffcc";
-            } else {
-                adminStatusText.innerText = "BROADCAST SERVER: P2P + CLOUD READY";
-                adminStatusText.style.color = "#ff66b3";
-            }
+            adminStatusText.innerText = "BROADCAST SERVER: CLOUD ACTIVE";
+            adminStatusText.style.color = "#ff66b3";
         });
-    }
-
-    function startCloudPolling(enteredPass) {
-        if (pollInterval) clearInterval(pollInterval);
-        pollInterval = setInterval(async () => {
-            const binId = localStorage.getItem('cyber_active_bin');
-            if (binId) {
-                try {
-                    const res = await fetch(`https://api.myjson.online/v1/records/${binId}`);
-                    const json = await res.json();
-                    if (json && json.jsonData) {
-                        checkAndApplyViewerAuth(enteredPass, json.jsonData);
-                    }
-                } catch(e) {}
-            }
-        }, 3000);
     }
 
     function initViewerPeer(enteredPass) {
@@ -682,8 +642,7 @@
             try { peer.destroy(); } catch(e) {}
         }
 
-        const roomHash = Math.abs(window.location.origin.split('').reduce((a,b)=>{a=((a<<5)-a)+b.charCodeAt(0);return a&a},0)).toString(36);
-        const hostPeerId = "cyber-lyric-host-v2-" + roomHash;
+        const hostPeerId = "cyber-lyric-global-room-2026";
 
         peer = new Peer({
             debug: 1,
@@ -691,11 +650,11 @@
         });
 
         peer.on('open', () => {
-            viewerStatusText.innerText = "NETWORK: CONNECTING TO HOST...";
+            viewerStatusText.innerText = "NETWORK: CONNECTING...";
             viewerConnection = peer.connect(hostPeerId, { reliable: true });
 
             viewerConnection.on('open', () => {
-                viewerStatusText.innerText = "NETWORK: STREAM LIVE (P2P)";
+                viewerStatusText.innerText = "NETWORK: STREAM LIVE";
                 viewerStatusText.style.color = "#00ffcc";
             });
 
@@ -704,24 +663,17 @@
                     checkAndApplyViewerAuth(enteredPass, msg.data);
                 }
             });
-
-            viewerConnection.on('close', () => {
-                viewerStatusText.innerText = "NETWORK: DISCONNECTED - RETRYING";
-                viewerStatusText.style.color = "#ff3366";
-            });
         });
 
-        peer.on('error', () => {
-            viewerStatusText.innerText = "NETWORK: HYBRID CLOUD SYNC";
-            viewerStatusText.style.color = "#ffb3d9";
-            startCloudPolling(enteredPass);
-        });
+        setInterval(() => {
+            fetchRelayCloudSync(enteredPass);
+        }, 2000);
 
-        startCloudPolling(enteredPass);
+        fetchRelayCloudSync(enteredPass);
     }
 
     function checkAndApplyViewerAuth(enteredPass, broadcastData) {
-        if (broadcastData && broadcastData.password) {
+        if (broadcastData && broadcastData.password && broadcastData.password !== "") {
             if (enteredPass === broadcastData.password) {
                 hideAllPages();
                 viewerUi.classList.remove('hidden');
@@ -732,15 +684,9 @@
                 viewerAuthError.classList.remove('hidden');
             }
         } else {
-            if (enteredPass === "viewer" || !broadcastData || !broadcastData.password) {
-                hideAllPages();
-                viewerUi.classList.remove('hidden');
-                renderBroadcast(broadcastData || { text: "Awaiting broadcast stream..." });
-            } else {
-                hideAllPages();
-                viewerAuthPage.classList.remove('hidden');
-                viewerAuthError.classList.remove('hidden');
-            }
+            hideAllPages();
+            viewerUi.classList.remove('hidden');
+            renderBroadcast(broadcastData || { text: "Awaiting broadcast stream..." });
         }
     }
 
@@ -922,7 +868,6 @@
 
     viewerLogoutBtn.addEventListener('click', () => {
         clearInterval(viewerTypeInterval);
-        if (pollInterval) clearInterval(pollInterval);
         if (peer) {
             try { peer.destroy(); } catch(e) {}
         }
