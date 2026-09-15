@@ -6,7 +6,6 @@
     <title>Pink Cyber Lyric Terminal</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
             --bg-dark: #0a050b;
@@ -15,7 +14,6 @@
             --pink-bright: #ff66b3;
             --pink-glow: rgba(255, 59, 141, 0.6);
             --pink-dim: #801d47;
-            --cyber-line: #ff2a7a;
             --text-main: #ffb3d9;
             --text-bright: #ffffff;
         }
@@ -465,8 +463,8 @@
 
 <script>
     const ADMIN_PASSWORD = "admin";
-    const TYPING_SPEED = 20;
     const LIBRARY_KEY = "retro_lyric_library";
+    const CLOUD_URL = "https://api.npoint.io/46f8ee44111326462db8";
 
     const rolePage = document.getElementById('role-page');
     const viewerAuthPage = document.getElementById('viewer-auth-page');
@@ -509,13 +507,9 @@
     const adminStatusText = document.getElementById('admin-status-text');
     const viewerStatusText = document.getElementById('viewer-status-text');
 
-    let viewerTypeInterval = null;
-    let adminTypeInterval = null;
-
-    let peer = null;
-    let adminConnections = [];
-    let viewerConnection = null;
     let currentBroadcastData = { text: "Awaiting broadcast stream...", password: "" };
+    let activePass = "";
+    let pollTimer = null;
 
     function hideAllPages() {
         rolePage.classList.add('hidden');
@@ -530,28 +524,7 @@
         element.scrollTop = element.scrollHeight;
     }
 
-    function startTypewriter(element, text, intervalRefSetter) {
-        element.innerText = '';
-        if (!text) return;
-
-        let currentIndex = 0;
-        const interval = setInterval(() => {
-            element.innerText += text.charAt(currentIndex);
-            currentIndex++;
-            element.scrollTop = element.scrollHeight;
-
-            if (currentIndex >= text.length) {
-                clearInterval(interval);
-            }
-        }, TYPING_SPEED);
-
-        intervalRefSetter(interval);
-    }
-
     function renderBroadcast(broadcastData) {
-        clearInterval(viewerTypeInterval);
-        clearInterval(adminTypeInterval);
-
         const text = (broadcastData && broadcastData.text) ? broadcastData.text : "Awaiting broadcast stream...";
 
         if (!viewerUi.classList.contains('hidden')) {
@@ -563,113 +536,50 @@
         }
     }
 
-    function fetchRelayCloudSync(pass) {
-        fetch('https://kvdb.io/4y9UqTq274Tj9wZqF979Jk/current_lyric')
-            .then(res => res.json())
-            .then(data => {
-                if (data && data.text) {
-                    checkAndApplyViewerAuth(pass, data);
+    async function pushToCloud(data) {
+        try {
+            await fetch(CLOUD_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            adminStatusText.innerText = "BROADCAST SERVER: ONLINE";
+            adminStatusText.style.color = "#00ffcc";
+        } catch(e) {
+            adminStatusText.innerText = "BROADCAST SERVER: OFFLINE";
+            adminStatusText.style.color = "#ff3366";
+        }
+    }
+
+    async function pollCloudData() {
+        try {
+            const res = await fetch(CLOUD_URL + '?nocache=' + Date.now());
+            if (res.ok) {
+                const data = await res.json();
+                if (data) {
+                    viewerStatusText.innerText = "NETWORK: STREAM LIVE";
+                    viewerStatusText.style.color = "#00ffcc";
+                    checkAndApplyViewerAuth(activePass, data);
                 }
-            })
-            .catch(() => {});
+            }
+        } catch(e) {
+            viewerStatusText.innerText = "NETWORK: RECONNECTING...";
+            viewerStatusText.style.color = "#ff3366";
+        }
+    }
+
+    function startViewerPolling(pass) {
+        activePass = pass;
+        if (pollTimer) clearInterval(pollTimer);
+        pollCloudData();
+        pollTimer = setInterval(pollCloudData, 1500);
     }
 
     function broadcastToRemoteViewers(data) {
         currentBroadcastData = data;
         localStorage.setItem("retro_lyric_broadcast", JSON.stringify(data));
-        
-        adminConnections.forEach(conn => {
-            if (conn && conn.open) {
-                conn.send({ type: 'LYRIC_UPDATE', data: data });
-            }
-        });
-
-        fetch('https://kvdb.io/4y9UqTq274Tj9wZqF979Jk/current_lyric', {
-            method: 'POST',
-            body: JSON.stringify(data)
-        }).catch(() => {});
-
+        pushToCloud(data);
         renderBroadcast(data);
-    }
-
-    function getICEConfig() {
-        return {
-            iceServers: [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' },
-                { urls: 'stun:stun2.l.google.com:19302' }
-            ]
-        };
-    }
-
-    function initAdminPeer() {
-        if (peer) {
-            try { peer.destroy(); } catch(e) {}
-        }
-
-        const hostPeerId = "cyber-lyric-global-room-2026";
-
-        peer = new Peer(hostPeerId, {
-            debug: 1,
-            config: getICEConfig()
-        });
-
-        peer.on('open', (id) => {
-            adminStatusText.innerText = "BROADCAST SERVER: ONLINE";
-            adminStatusText.style.color = "#00ffcc";
-        });
-
-        peer.on('connection', (conn) => {
-            adminConnections.push(conn);
-
-            conn.on('open', () => {
-                conn.send({ type: 'SYNC', data: currentBroadcastData });
-            });
-
-            conn.on('close', () => {
-                adminConnections = adminConnections.filter(c => c !== conn);
-            });
-        });
-
-        peer.on('error', (err) => {
-            adminStatusText.innerText = "BROADCAST SERVER: CLOUD ACTIVE";
-            adminStatusText.style.color = "#ff66b3";
-        });
-    }
-
-    function initViewerPeer(enteredPass) {
-        if (peer) {
-            try { peer.destroy(); } catch(e) {}
-        }
-
-        const hostPeerId = "cyber-lyric-global-room-2026";
-
-        peer = new Peer({
-            debug: 1,
-            config: getICEConfig()
-        });
-
-        peer.on('open', () => {
-            viewerStatusText.innerText = "NETWORK: CONNECTING...";
-            viewerConnection = peer.connect(hostPeerId, { reliable: true });
-
-            viewerConnection.on('open', () => {
-                viewerStatusText.innerText = "NETWORK: STREAM LIVE";
-                viewerStatusText.style.color = "#00ffcc";
-            });
-
-            viewerConnection.on('data', (msg) => {
-                if (msg.type === 'SYNC' || msg.type === 'LYRIC_UPDATE') {
-                    checkAndApplyViewerAuth(enteredPass, msg.data);
-                }
-            });
-        });
-
-        setInterval(() => {
-            fetchRelayCloudSync(enteredPass);
-        }, 2000);
-
-        fetchRelayCloudSync(enteredPass);
     }
 
     function checkAndApplyViewerAuth(enteredPass, broadcastData) {
@@ -831,6 +741,7 @@
     });
 
     viewerBackBtn.addEventListener('click', () => {
+        if (pollTimer) clearInterval(pollTimer);
         hideAllPages();
         rolePage.classList.remove('hidden');
     });
@@ -842,7 +753,7 @@
 
     viewerLoginBtn.addEventListener('click', () => {
         const enteredPass = viewerPassInput.value.trim();
-        initViewerPeer(enteredPass);
+        startViewerPolling(enteredPass);
     });
 
     adminLoginBtn.addEventListener('click', () => {
@@ -850,7 +761,8 @@
             hideAllPages();
             adminUi.classList.remove('hidden');
             renderLibrary();
-            initAdminPeer();
+            adminStatusText.innerText = "BROADCAST SERVER: ONLINE";
+            adminStatusText.style.color = "#00ffcc";
 
             const savedLocal = localStorage.getItem("retro_lyric_broadcast");
             if (savedLocal) {
@@ -867,19 +779,12 @@
     });
 
     viewerLogoutBtn.addEventListener('click', () => {
-        clearInterval(viewerTypeInterval);
-        if (peer) {
-            try { peer.destroy(); } catch(e) {}
-        }
+        if (pollTimer) clearInterval(pollTimer);
         hideAllPages();
         rolePage.classList.remove('hidden');
     });
 
     adminLogoutBtn.addEventListener('click', () => {
-        clearInterval(adminTypeInterval);
-        if (peer) {
-            try { peer.destroy(); } catch(e) {}
-        }
         hideAllPages();
         rolePage.classList.remove('hidden');
     });
@@ -905,7 +810,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         const passParam = urlParams.get('pass');
         if (passParam !== null) {
-            initViewerPeer(passParam);
+            startViewerPolling(passParam);
         }
     });
 
