@@ -7,14 +7,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #050000;
-            --card-bg: #120202;
-            --border-red: #ff0033;
-            --dark-red: #660014;
-            --bright-red: #ff3355;
-            --text-main: #ff4d4d;
-            --text-dim: #881111;
-            --glow-red: 0 0 10px rgba(255, 0, 51, 0.8), 0 0 20px rgba(255, 0, 51, 0.4);
+            --bg-color: #0d0000;
+            --card-bg: #1a0505;
+            --border-red: #ff1a40;
+            --dark-red: #80001a;
+            --bright-red: #ff4d6d;
+            --text-main: #ff8095;
+            --text-dim: #b3364b;
+            --glow-red: 0 0 12px rgba(255, 26, 64, 0.9);
+            --display-bg: #000000;
+            --display-text: #ffffff;
+            --input-text: #ff99aa;
         }
 
         * {
@@ -36,13 +39,13 @@
             overflow-x: hidden;
         }
 
-        /* CRT Scanline Effect */
+        /* Subtle CRT Scanline Effect for High Clarity */
         body::before {
             content: " ";
             display: block;
             position: absolute;
             top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.75) 50%);
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%);
             background-size: 100% 4px;
             z-index: 100;
             pointer-events: none;
@@ -52,7 +55,7 @@
             background-color: var(--card-bg);
             padding: 25px;
             border: 4px solid var(--border-red);
-            box-shadow: var(--glow-red), inset 0 0 15px rgba(255, 0, 51, 0.3);
+            box-shadow: var(--glow-red), inset 0 0 15px rgba(255, 26, 64, 0.3);
             max-width: 850px;
             width: 100%;
             display: flex;
@@ -76,23 +79,23 @@
             width: 100%;
             min-height: 250px;
             max-height: 400px;
-            background-color: #000000;
-            border: 2px solid var(--dark-red);
+            background-color: var(--display-bg);
+            border: 3px solid var(--border-red);
             padding: 20px;
             overflow-y: auto;
             white-space: pre-wrap;
             word-wrap: break-word;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             line-height: 1.8;
-            color: #ffffff;
-            text-shadow: 0 0 5px #ffffff, 0 0 10px var(--border-red);
+            color: var(--display-text);
+            text-shadow: 0 0 6px rgba(255, 255, 255, 0.8), 0 0 12px var(--border-red);
             margin-bottom: 20px;
-            box-shadow: inset 0 0 10px rgba(255, 0, 51, 0.2);
+            box-shadow: inset 0 0 15px rgba(255, 26, 64, 0.25);
         }
 
-        /* Custom Scrollbar for Display */
+        /* High-contrast Scrollbar */
         .display-screen::-webkit-scrollbar {
-            width: 8px;
+            width: 10px;
         }
 
         .display-screen::-webkit-scrollbar-track {
@@ -101,7 +104,7 @@
 
         .display-screen::-webkit-scrollbar-thumb {
             background: var(--dark-red);
-            border: 1px solid var(--border-red);
+            border: 2px solid var(--border-red);
         }
 
         .text-input {
@@ -109,19 +112,23 @@
             height: 120px;
             padding: 15px;
             font-family: 'Press Start 2P', monospace;
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             line-height: 1.5;
-            border: 2px solid var(--dark-red);
+            border: 2px solid var(--border-red);
             background-color: #000000;
-            color: var(--border-red);
+            color: var(--input-text);
             outline: none;
             resize: vertical;
             margin-bottom: 20px;
-            box-shadow: inset 0 0 8px rgba(255, 0, 51, 0.3);
+            box-shadow: inset 0 0 10px rgba(255, 26, 64, 0.3);
+        }
+
+        .text-input::placeholder {
+            color: var(--text-dim);
         }
 
         .text-input:focus {
-            border-color: var(--border-red);
+            border-color: var(--bright-red);
             box-shadow: var(--glow-red);
         }
 
@@ -133,7 +140,7 @@
         button {
             font-family: 'Press Start 2P', monospace;
             padding: 12px 20px;
-            font-size: 0.65rem;
+            font-size: 0.7rem;
             border: 2px solid var(--border-red);
             background-color: var(--dark-red);
             color: #ffffff;
@@ -158,7 +165,7 @@
 <div class="container">
     <h1>[LYRIC_DISPLAY_TERMINAL]</h1>
 
-    <div id="display-screen" class="display-screen">Enter lyrics or text below to display on terminal screen...</div>
+    <div id="display-screen" class="display-screen"></div>
 
     <textarea id="text-input" class="text-input" placeholder="PASTE LYRICS OR TYPE TEXT HERE..."></textarea>
 
@@ -172,22 +179,52 @@
     const displayScreen = document.getElementById('display-screen');
     const clearBtn = document.getElementById('clear-btn');
 
-    // Live update screen as user types or pastes text
+    const defaultMessage = 'Enter lyrics or text below to display on terminal screen...';
+    let typeInterval = null;
+    let targetText = defaultMessage;
+    let currentIndex = 0;
+
+    // Mid-fast typing pace (~20ms per character)
+    const TYPING_SPEED = 20;
+
+    function startTypewriter(text) {
+        clearInterval(typeInterval);
+        displayScreen.innerText = '';
+        targetText = text;
+        currentIndex = 0;
+
+        if (targetText.length === 0) return;
+
+        typeInterval = setInterval(() => {
+            displayScreen.innerText += targetText.charAt(currentIndex);
+            currentIndex++;
+            displayScreen.scrollTop = displayScreen.scrollHeight;
+
+            if (currentIndex >= targetText.length) {
+                clearInterval(typeInterval);
+            }
+        }, TYPING_SPEED);
+    }
+
+    // Live update with character-by-character animation
     textInput.addEventListener('input', () => {
         const value = textInput.value;
         if (value.trim() === '') {
-            displayScreen.innerText = 'Enter lyrics or text below to display on terminal screen...';
+            startTypewriter(defaultMessage);
         } else {
-            displayScreen.innerText = value;
+            startTypewriter(value);
         }
     });
 
     // Clear display button handler
     clearBtn.addEventListener('click', () => {
         textInput.value = '';
-        displayScreen.innerText = 'Enter lyrics or text below to display on terminal screen...';
+        startTypewriter(defaultMessage);
         textInput.focus();
     });
+
+    // Initialize display on load
+    startTypewriter(defaultMessage);
 </script>
 
 </body>
