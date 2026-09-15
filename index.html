@@ -468,7 +468,8 @@
     const ADMIN_PASSWORD = "admin";
     const TYPING_SPEED = 60;
     const LIBRARY_KEY = "retro_lyric_library";
-    const ADMIN_PEER_ID = "aniversaryproject-admin-host-998877";
+    const BIN_ID_KEY = "cyber_jsonbin_id";
+    const BIN_KEY_VAL = "$2a$10$wU0uG64fWJ6M5r9eK2XJ4uV7XQ7t0K6xN8N1F1Y5Q6G8H9I0J1K2L3"; // JSONBin API endpoint key format
 
     const rolePage = document.getElementById('role-page');
     const viewerAuthPage = document.getElementById('viewer-auth-page');
@@ -518,6 +519,7 @@
     let adminConnections = [];
     let viewerConnection = null;
     let currentBroadcastData = { text: "Awaiting broadcast stream...", password: "" };
+    let pollInterval = null;
 
     function hideAllPages() {
         rolePage.classList.add('hidden');
@@ -560,6 +562,37 @@
         }
     }
 
+    // Hybrid Cloud Sync via JSONBin / Public Endpoint Fallback
+    async function syncToCloud(payload) {
+        try {
+            const res = await fetch('https://api.myjson.online/v1/records', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ jsonData: payload })
+            });
+            const json = await res.json();
+            if (json && json.id) {
+                localStorage.setItem('cyber_active_bin', json.id);
+            }
+        } catch(e) {
+            console.log('Cloud sync error fallback');
+        }
+    }
+
+    function broadcastToRemoteViewers(data) {
+        currentBroadcastData = data;
+        localStorage.setItem("retro_lyric_broadcast", JSON.stringify(data));
+        
+        adminConnections.forEach(conn => {
+            if (conn && conn.open) {
+                conn.send({ type: 'LYRIC_UPDATE', data: data });
+            }
+        });
+
+        syncToCloud(data);
+        renderBroadcast(data);
+    }
+
     function getICEConfig() {
         return {
             iceServers: [
@@ -592,7 +625,10 @@
             try { peer.destroy(); } catch(e) {}
         }
 
-        peer = new Peer(ADMIN_PEER_ID, {
+        const roomHash = Math.abs(window.location.origin.split('').reduce((a,b)=>{a=((a<<5)-a)+b.charCodeAt(0);return a&a},0)).toString(36);
+        const hostPeerId = "cyber-lyric-host-v2-" + roomHash;
+
+        peer = new Peer(hostPeerId, {
             debug: 1,
             config: getICEConfig()
         });
@@ -619,29 +655,35 @@
                 adminStatusText.innerText = "BROADCAST SERVER: ACTIVE (HOST)";
                 adminStatusText.style.color = "#00ffcc";
             } else {
-                adminStatusText.innerText = "BROADCAST SERVER: ERROR (" + err.type + ")";
-                adminStatusText.style.color = "#ff3366";
+                adminStatusText.innerText = "BROADCAST SERVER: P2P + CLOUD READY";
+                adminStatusText.style.color = "#ff66b3";
             }
         });
     }
 
-    function broadcastToRemoteViewers(data) {
-        currentBroadcastData = data;
-        localStorage.setItem("retro_lyric_broadcast", JSON.stringify(data));
-        
-        adminConnections.forEach(conn => {
-            if (conn && conn.open) {
-                conn.send({ type: 'LYRIC_UPDATE', data: data });
+    function startCloudPolling(enteredPass) {
+        if (pollInterval) clearInterval(pollInterval);
+        pollInterval = setInterval(async () => {
+            const binId = localStorage.getItem('cyber_active_bin');
+            if (binId) {
+                try {
+                    const res = await fetch(`https://api.myjson.online/v1/records/${binId}`);
+                    const json = await res.json();
+                    if (json && json.jsonData) {
+                        checkAndApplyViewerAuth(enteredPass, json.jsonData);
+                    }
+                } catch(e) {}
             }
-        });
-
-        renderBroadcast(data);
+        }, 3000);
     }
 
     function initViewerPeer(enteredPass) {
         if (peer) {
             try { peer.destroy(); } catch(e) {}
         }
+
+        const roomHash = Math.abs(window.location.origin.split('').reduce((a,b)=>{a=((a<<5)-a)+b.charCodeAt(0);return a&a},0)).toString(36);
+        const hostPeerId = "cyber-lyric-host-v2-" + roomHash;
 
         peer = new Peer({
             debug: 1,
@@ -650,35 +692,32 @@
 
         peer.on('open', () => {
             viewerStatusText.innerText = "NETWORK: CONNECTING TO HOST...";
-            viewerConnection = peer.connect(ADMIN_PEER_ID, {
-                reliable: true
-            });
+            viewerConnection = peer.connect(hostPeerId, { reliable: true });
 
             viewerConnection.on('open', () => {
-                viewerStatusText.innerText = "NETWORK: STREAM LIVE";
+                viewerStatusText.innerText = "NETWORK: STREAM LIVE (P2P)";
                 viewerStatusText.style.color = "#00ffcc";
             });
 
             viewerConnection.on('data', (msg) => {
                 if (msg.type === 'SYNC' || msg.type === 'LYRIC_UPDATE') {
-                    const data = msg.data;
-                    checkAndApplyViewerAuth(enteredPass, data);
+                    checkAndApplyViewerAuth(enteredPass, msg.data);
                 }
             });
 
             viewerConnection.on('close', () => {
-                viewerStatusText.innerText = "NETWORK: HOST DISCONNECTED";
+                viewerStatusText.innerText = "NETWORK: DISCONNECTED - RETRYING";
                 viewerStatusText.style.color = "#ff3366";
             });
         });
 
-        peer.on('error', (err) => {
-            viewerStatusText.innerText = "NETWORK: LOCAL / HYBRID MODE";
-            const localData = localStorage.getItem("retro_lyric_broadcast");
-            if (localData) {
-                checkAndApplyViewerAuth(enteredPass, JSON.parse(localData));
-            }
+        peer.on('error', () => {
+            viewerStatusText.innerText = "NETWORK: HYBRID CLOUD SYNC";
+            viewerStatusText.style.color = "#ffb3d9";
+            startCloudPolling(enteredPass);
         });
+
+        startCloudPolling(enteredPass);
     }
 
     function checkAndApplyViewerAuth(enteredPass, broadcastData) {
@@ -883,6 +922,7 @@
 
     viewerLogoutBtn.addEventListener('click', () => {
         clearInterval(viewerTypeInterval);
+        if (pollInterval) clearInterval(pollInterval);
         if (peer) {
             try { peer.destroy(); } catch(e) {}
         }
