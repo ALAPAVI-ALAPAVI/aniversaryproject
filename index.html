@@ -231,7 +231,13 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            max-width: 300px;
+            max-width: 250px;
+        }
+
+        .library-item-pass {
+            color: var(--text-dim);
+            font-size: 0.55rem;
+            margin-left: 8px;
         }
 
         .library-actions {
@@ -262,7 +268,7 @@
     <!-- VIEWER AUTH -->
     <div id="viewer-auth-page" class="view-section hidden">
         <h1>[VIEWER AUTHENTICATION]</h1>
-        <input type="password" id="viewer-pass-input" class="input-field" placeholder="ENTER VIEWER PASSWORD" autofocus>
+        <input type="password" id="viewer-pass-input" class="input-field" placeholder="ENTER LYRIC PASSWORD" autofocus>
         <div id="viewer-auth-error" class="error-msg hidden">INVALID PASSWORD</div>
         <div class="controls">
             <button id="viewer-login-btn">ACCESS</button>
@@ -302,6 +308,7 @@
         <div class="library-container">
             <div id="library-list" class="library-list"></div>
             <input type="text" id="song-title-input" class="input-field" placeholder="TITLE / SONG NAME" style="text-align: left; margin-bottom: 8px;">
+            <input type="text" id="song-pass-input" class="input-field" placeholder="ASSIGN VIEWER PASSWORD FOR THIS LYRIC" style="text-align: left; margin-bottom: 8px;">
             <textarea id="admin-text-input" class="input-field text-area-input" placeholder="PASTE OR TYPE LYRICS HERE..."></textarea>
             <div class="controls" style="margin-top: 5px;">
                 <button id="save-library-btn">SAVE TO LIBRARY</button>
@@ -318,8 +325,7 @@
 </div>
 
 <script>
-    // Configurable Passwords
-    const VIEWER_PASSWORD = "viewer";
+    // Configurable Admin Master Password
     const ADMIN_PASSWORD = "admin";
 
     // Slowed-down typewriter pace (75ms per character)
@@ -354,6 +360,7 @@
     const adminPreviewDisplay = document.getElementById('admin-preview-display');
     const adminTextInput = document.getElementById('admin-text-input');
     const songTitleInput = document.getElementById('song-title-input');
+    const songPassInput = document.getElementById('song-pass-input');
     const libraryList = document.getElementById('library-list');
     
     const saveLibraryBtn = document.getElementById('save-library-btn');
@@ -364,6 +371,7 @@
 
     let viewerTypeInterval = null;
     let adminTypeInterval = null;
+    let activeViewerPassword = null;
 
     function hideAllPages() {
         rolePage.classList.add('hidden');
@@ -391,9 +399,11 @@
         intervalRefSetter(interval);
     }
 
-    function renderBroadcast(text) {
+    function renderBroadcast(broadcastData) {
         clearInterval(viewerTypeInterval);
         clearInterval(adminTypeInterval);
+
+        const text = (broadcastData && broadcastData.text) ? broadcastData.text : "Awaiting broadcast...";
 
         if (!viewerUi.classList.contains('hidden')) {
             startTypewriter(viewerDisplay, text, (inv) => viewerTypeInterval = inv);
@@ -402,6 +412,11 @@
         if (!adminUi.classList.contains('hidden')) {
             startTypewriter(adminPreviewDisplay, text, (inv) => adminTypeInterval = inv);
         }
+    }
+
+    function getBroadcastData() {
+        const data = localStorage.getItem(BROADCAST_KEY);
+        return data ? JSON.parse(data) : null;
     }
 
     // Library Functions
@@ -428,7 +443,10 @@
             const div = document.createElement('div');
             div.className = 'library-item';
             div.innerHTML = `
-                <span class="library-item-title">${item.title}</span>
+                <div>
+                    <span class="library-item-title">${item.title}</span>
+                    <span class="library-item-pass">[PASS: ${item.password || 'NONE'}]</span>
+                </div>
                 <div class="library-actions">
                     <button onclick="loadLibraryItem(${index})">LOAD</button>
                     <button onclick="deleteLibraryItem(${index})">DELETE</button>
@@ -443,6 +461,7 @@
         const item = library[index];
         if (item) {
             songTitleInput.value = item.title;
+            songPassInput.value = item.password || '';
             adminTextInput.value = item.text;
         }
     };
@@ -455,15 +474,17 @@
 
     saveLibraryBtn.addEventListener('click', () => {
         const title = songTitleInput.value.trim() || 'UNTITLED';
+        const password = songPassInput.value.trim();
         const text = adminTextInput.value.trim();
 
         if (!text) return;
 
         const library = getLibrary();
-        library.push({ title, text });
+        library.push({ title, password, text });
         saveLibrary(library);
 
         songTitleInput.value = '';
+        songPassInput.value = '';
     });
 
     // Role Navigation
@@ -495,13 +516,29 @@
 
     // Auth Handlers
     viewerLoginBtn.addEventListener('click', () => {
-        if (viewerPassInput.value === VIEWER_PASSWORD) {
-            hideAllPages();
-            viewerUi.classList.remove('hidden');
-            const currentBroadcast = localStorage.getItem(BROADCAST_KEY) || "Awaiting broadcast...";
-            renderBroadcast(currentBroadcast);
+        const enteredPass = viewerPassInput.value.trim();
+        const broadcastData = getBroadcastData();
+
+        // Check if entered password matches broadcast password (or if no password set/default allowed)
+        if (broadcastData && broadcastData.password) {
+            if (enteredPass === broadcastData.password) {
+                hideAllPages();
+                viewerUi.classList.remove('hidden');
+                activeViewerPassword = enteredPass;
+                renderBroadcast(broadcastData);
+            } else {
+                viewerAuthError.classList.remove('hidden');
+            }
         } else {
-            viewerAuthError.classList.remove('hidden');
+            // Default fallback if broadcast password is empty or default
+            if (enteredPass === "viewer" || !broadcastData || !broadcastData.password) {
+                hideAllPages();
+                viewerUi.classList.remove('hidden');
+                activeViewerPassword = enteredPass;
+                renderBroadcast(broadcastData || { text: "Awaiting broadcast..." });
+            } else {
+                viewerAuthError.classList.remove('hidden');
+            }
         }
     });
 
@@ -510,8 +547,11 @@
             hideAllPages();
             adminUi.classList.remove('hidden');
             renderLibrary();
-            const currentBroadcast = localStorage.getItem(BROADCAST_KEY) || "Awaiting broadcast...";
-            adminTextInput.value = currentBroadcast === "Awaiting broadcast..." ? "" : currentBroadcast;
+            const currentBroadcast = getBroadcastData();
+            if (currentBroadcast) {
+                adminTextInput.value = currentBroadcast.text || "";
+                songPassInput.value = currentBroadcast.password || "";
+            }
             renderBroadcast(currentBroadcast);
         } else {
             adminAuthError.classList.remove('hidden');
@@ -521,6 +561,7 @@
     // Logout Handlers
     viewerLogoutBtn.addEventListener('click', () => {
         clearInterval(viewerTypeInterval);
+        activeViewerPassword = null;
         hideAllPages();
         rolePage.classList.remove('hidden');
     });
@@ -534,22 +575,26 @@
     // Admin Broadcast Action
     broadcastBtn.addEventListener('click', () => {
         const text = adminTextInput.value.trim() === '' ? 'Awaiting broadcast...' : adminTextInput.value;
-        localStorage.setItem(BROADCAST_KEY, text);
-        renderBroadcast(text);
+        const password = songPassInput.value.trim();
+        const broadcastData = { text, password };
+        localStorage.setItem(BROADCAST_KEY, JSON.stringify(broadcastData));
+        renderBroadcast(broadcastData);
     });
 
     adminClearBtn.addEventListener('click', () => {
         adminTextInput.value = '';
         songTitleInput.value = '';
-        const defaultText = 'Awaiting broadcast...';
-        localStorage.setItem(BROADCAST_KEY, defaultText);
-        renderBroadcast(defaultText);
+        songPassInput.value = '';
+        const defaultData = { text: 'Awaiting broadcast...', password: '' };
+        localStorage.setItem(BROADCAST_KEY, JSON.stringify(defaultData));
+        renderBroadcast(defaultData);
     });
 
     // Listen for storage updates across tabs/windows in real time
     window.addEventListener('storage', (e) => {
         if (e.key === BROADCAST_KEY) {
-            renderBroadcast(e.newValue || 'Awaiting broadcast...');
+            const data = e.newValue ? JSON.parse(e.newValue) : null;
+            renderBroadcast(data);
         }
     });
 </script>
