@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudoku Web App</title>
+    <style>
+        :root {
+            --bg-color: #f4f6f8;
+            --container-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #34495e;
+            --light-border: #cccccc;
+            --selected-bg: #b3d4fc;
+            --given-color: #1a252f;
+            --user-color: #2980b9;
+            --error-color: #e74c3c;
+            --btn-bg: #2c3e50;
+            --btn-hover: #34495e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background-color: var(--container-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: var(--border-color);
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+        }
+
+        select, button {
+            padding: 10px 16px;
+            font-size: 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        select {
+            border: 1px solid var(--light-border);
+            background-color: #fff;
+        }
+
+        button {
+            background-color: var(--btn-bg);
+            color: white;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background-color: var(--btn-hover);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .secondary-btn {
+            background-color: #7f8c8d;
+        }
+
+        .secondary-btn:hover {
+            background-color: #95a5a6;
+        }
+
+        #sudoku-board {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            grid-template-rows: repeat(9, 1fr);
+            width: 100%;
+            max-width: 450px;
+            aspect-ratio: 1;
+            border: 3px solid var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .cell {
+            width: 100%;
+            height: 100%;
+            border: 1px solid var(--light-border);
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            outline: none;
+            box-sizing: border-box;
+            caret-color: transparent;
+            padding: 0;
+            margin: 0;
+            border-radius: 0;
+            -webkit-appearance: none;
+        }
+
+        .cell:nth-child(3n) {
+            border-right: 2px solid var(--border-color);
+        }
+        .cell:nth-child(9n) {
+            border-right: 1px solid var(--light-border);
+        }
+        .cell:nth-child(n+19):nth-child(-n+27),
+        .cell:nth-child(n+46):nth-child(-n+54) {
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .cell.given {
+            background-color: #f0f3f4;
+            color: var(--given-color);
+            font-weight: 800;
+        }
+
+        .cell.user-entered {
+            color: var(--user-color);
+            background-color: #ffffff;
+        }
+
+        .cell:focus {
+            background-color: var(--selected-bg) !important;
+        }
+
+        .cell.error {
+            color: var(--error-color) !important;
+            background-color: #fadbd8 !important;
+        }
+
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-top: 20px;
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .numpad button {
+            padding: 12px;
+            font-size: 1.2rem;
+            background-color: #ecf0f1;
+            color: #2c3e50;
+        }
+
+        .numpad button:hover {
+            background-color: #bdc3c7;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Sudoku</h1>
+    
+    <div class="controls">
+        <select id="difficulty">
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Medium</option>
+            <option value="hard">Hard</option>
+        </select>
+        <button id="generate-btn">New Game</button>
+        <button id="blank-btn" class="secondary-btn">Blank Board</button>
+        <button id="clear-btn" class="secondary-btn">Reset</button>
+    </div>
+
+    <div id="sudoku-board"></div>
+
+    <div class="numpad">
+        <button onclick="inputNumber(1)">1</button>
+        <button onclick="inputNumber(2)">2</button>
+        <button onclick="inputNumber(3)">3</button>
+        <button onclick="inputNumber(4)">4</button>
+        <button onclick="inputNumber(5)">5</button>
+        <button onclick="inputNumber(6)">6</button>
+        <button onclick="inputNumber(7)">7</button>
+        <button onclick="inputNumber(8)">8</button>
+        <button onclick="inputNumber(9)">9</button>
+        <button onclick="inputNumber('')">Erase</button>
+    </div>
+</div>
+
+<script>
+    const boardElement = document.getElementById('sudoku-board');
+    let selectedCell = null;
+    let initialBoard = Array(81).fill(0);
+    let currentBoard = Array(81).fill(0);
+
+    function createBoardUI() {
+        boardElement.innerHTML = '';
+        for (let i = 0; i < 81; i++) {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.maxLength = 1;
+            input.classList.add('cell');
+            input.dataset.index = i;
+
+            input.addEventListener('focus', () => selectedCell = input);
+            input.addEventListener('keydown', handleKeyDown);
+            input.addEventListener('input', handleInput);
+
+            boardElement.appendChild(input);
+        }
+    }
+
+    function handleKeyDown(e) {
+        if (e.target.readOnly) return;
+        if (['1','2','3','4','5','6','7','8','9'].includes(e.key)) {
+            e.target.value = e.key;
+            updateCellValue(e.target, parseInt(e.key));
+            e.preventDefault();
+        } else if (e.key === 'Backspace' || e.key === 'Delete') {
+            e.target.value = '';
+            updateCellValue(e.target, 0);
+            e.preventDefault();
+        }
+    }
+
+    function handleInput(e) {
+        const val = e.target.value;
+        if (!/^[1-9]$/.test(val)) {
+            e.target.value = '';
+            updateCellValue(e.target, 0);
+        } else {
+            updateCellValue(e.target, parseInt(val));
+        }
+    }
+
+    function inputNumber(num) {
+        if (selectedCell && !selectedCell.readOnly) {
+            selectedCell.value = num;
+            updateCellValue(selectedCell, num === '' ? 0 : num);
+        }
+    }
+
+    function updateCellValue(cell, val) {
+        const index = parseInt(cell.dataset.index);
+        currentBoard[index] = val;
+        validateBoard();
+    }
+
+    function validateBoard() {
+        const cells = boardElement.children;
+        for (let i = 0; i < 81; i++) {
+            cells[i].classList.remove('error');
+        }
+
+        for (let i = 0; i < 81; i++) {
+            const val = currentBoard[i];
+            if (val === 0) continue;
+
+            const row = Math.floor(i / 9);
+            const col = i % 9;
+
+            for (let j = 0; j < 81; j++) {
+                if (i === j) continue;
+                const r2 = Math.floor(j / 9);
+                const c2 = j % 9;
+                const sameBox = Math.floor(row / 3) === Math.floor(r2 / 3) && Math.floor(col / 3) === Math.floor(c2 / 3);
+
+                if ((row === r2 || col === c2 || sameBox) && currentBoard[j] === val) {
+                    cells[i].classList.add('error');
+                }
+            }
+        }
+    }
+
+    function isValid(board, row, col, num) {
+        for (let i = 0; i < 9; i++) {
+            const m = 3 * Math.floor(row / 3) + Math.floor(i / 3);
+            const n = 3 * Math.floor(col / 3) + i % 3;
+            if (board[row * 9 + i] === num || board[i * 9 + col] === num || board[m * 9 + n] === num) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function solveSudoku(board) {
+        for (let i = 0; i < 81; i++) {
+            if (board[i] === 0) {
+                const row = Math.floor(i / 9);
+                const col = i % 9;
+                const nums = [1, 2, 3, 4, 5, 6, 7, 8, 9].sort(() => Math.random() - 0.5);
+                for (let num of nums) {
+                    if (isValid(board, row, col, num)) {
+                        board[i] = num;
+                        if (solveSudoku(board)) return true;
+                        board[i] = 0;
+                    }
+                }
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function generateSudoku(difficulty) {
+        let board = Array(81).fill(0);
+        solveSudoku(board);
+
+        let removes = 40;
+        if (difficulty === 'easy') removes = 30;
+        if (difficulty === 'hard') removes = 50;
+
+        while (removes > 0) {
+            let idx = Math.floor(Math.random() * 81);
+            if (board[idx] !== 0) {
+                board[idx] = 0;
+                removes--;
+            }
+        }
+        return board;
+    }
+
+    function renderBoard(board, isBlank = false) {
+        initialBoard = [...board];
+        currentBoard = [...board];
+        const cells = boardElement.children;
+
+        for (let i = 0; i < 81; i++) {
+            const cell = cells[i];
+            cell.classList.remove('given', 'user-entered', 'error');
+            if (board[i] !== 0) {
+                cell.value = board[i];
+                cell.classList.add('given');
+                cell.readOnly = true;
+            } else {
+                cell.value = '';
+                cell.classList.add('user-entered');
+                cell.readOnly = false;
+            }
+        }
+    }
+
+    document.getElementById('generate-btn').addEventListener('click', () => {
+        const diff = document.getElementById('difficulty').value;
+        const newBoard = generateSudoku(diff);
+        renderBoard(newBoard);
+    });
+
+    document.getElementById('blank-btn').addEventListener('click', () => {
+        const blankBoard = Array(81).fill(0);
+        renderBoard(blankBoard, true);
+    });
+
+    document.getElementById('clear-btn').addEventListener('click', () => {
+        renderBoard(initialBoard);
+    });
+
+    createBoardUI();
+    renderBoard(generateSudoku('medium'));
+</script>
+
+</body>
+</html>
