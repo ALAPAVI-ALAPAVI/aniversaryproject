@@ -3,21 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retro Lyric Terminal</title>
+    <title>Pink Cyber Lyric Terminal</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0d0000;
-            --card-bg: #1a0505;
-            --border-red: #ff1a40;
-            --dark-red: #80001a;
-            --bright-red: #ff4d6d;
-            --text-main: #ff8095;
-            --text-dim: #b3364b;
-            --glow-red: 0 0 12px rgba(255, 26, 64, 0.9);
-            --display-bg: #000000;
-            --display-text: #ffffff;
-            --input-text: #ff99aa;
+            --bg-dark: #0a050b;
+            --panel-bg: rgba(22, 10, 24, 0.92);
+            --pink-accent: #ff3b8d;
+            --pink-bright: #ff66b3;
+            --pink-glow: rgba(255, 59, 141, 0.6);
+            --pink-dim: #801d47;
+            --cyber-line: #ff2a7a;
+            --text-main: #ffb3d9;
+            --text-bright: #ffffff;
         }
 
         * {
@@ -27,7 +25,7 @@
 
         body {
             font-family: 'Press Start 2P', monospace;
-            background-color: var(--bg-color);
+            background-color: var(--bg-dark);
             color: var(--text-main);
             display: flex;
             justify-content: center;
@@ -37,42 +35,84 @@
             padding: 20px;
             position: relative;
             overflow-x: hidden;
+            /* Cyber grid background */
+            background-image: 
+                linear-gradient(rgba(255, 59, 141, 0.07) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 59, 141, 0.07) 1px, transparent 1px);
+            background-size: 30px 30px;
         }
 
-        /* Subtle CRT Scanline Effect */
+        /* Scanline Overlay */
         body::before {
             content: " ";
             display: block;
             position: absolute;
             top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%);
+            background: linear-gradient(rgba(18, 10, 20, 0) 50%, rgba(0, 0, 0, 0.45) 50%);
             background-size: 100% 4px;
             z-index: 100;
             pointer-events: none;
         }
 
+        .cyber-wrapper {
+            position: relative;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        /* Futuristic Corner Accents */
+        .cyber-wrapper::before, .cyber-wrapper::after {
+            content: "";
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border: 3px solid var(--pink-bright);
+            z-index: 20;
+        }
+
+        .cyber-wrapper::before { top: -6px; left: -6px; border-right: none; border-bottom: none; }
+        .cyber-wrapper::after { bottom: -6px; right: -6px; border-left: none; border-top: none; }
+
         .container {
-            background-color: var(--card-bg);
-            padding: 25px;
-            border: 4px solid var(--border-red);
-            box-shadow: var(--glow-red), inset 0 0 15px rgba(255, 26, 64, 0.3);
-            max-width: 850px;
+            background-color: var(--panel-bg);
+            padding: 30px;
+            border: 2px solid var(--pink-accent);
+            box-shadow: 0 0 20px var(--pink-glow), inset 0 0 20px rgba(255, 59, 141, 0.15);
             width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
             position: relative;
             z-index: 10;
+            clip-path: polygon(
+                0 0, 
+                calc(100% - 20px) 0, 100% 20px, 
+                100% 100%, 
+                20px 100%, 0 calc(100% - 20px)
+            );
+        }
+
+        /* Top Header Strip */
+        .cyber-header-tab {
+            position: absolute;
+            top: -15px;
+            background: var(--pink-accent);
+            color: #000;
+            padding: 4px 15px;
+            font-size: 0.6rem;
+            letter-spacing: 2px;
+            font-weight: bold;
+            box-shadow: 0 0 10px var(--pink-glow);
         }
 
         h1 {
-            margin-top: 0;
-            font-size: 1.2rem;
-            color: var(--border-red);
-            text-shadow: var(--glow-red);
+            margin-top: 10px;
+            font-size: 1.1rem;
+            color: var(--pink-bright);
+            text-shadow: 0 0 8px var(--pink-glow);
             text-align: center;
             letter-spacing: 2px;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
         .view-section {
@@ -92,22 +132,24 @@
             margin-bottom: 20px;
         }
 
+        /* Cyberpunk Framed Display Screen */
         .display-screen {
             width: 100%;
             min-height: 220px;
             max-height: 320px;
-            background-color: var(--display-bg);
-            border: 3px solid var(--border-red);
+            background-color: #050206;
+            border: 2px solid var(--pink-accent);
             padding: 20px;
             overflow-y: auto;
             white-space: pre-wrap;
             word-wrap: break-word;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             line-height: 1.8;
-            color: var(--display-text);
-            text-shadow: 0 0 6px rgba(255, 255, 255, 0.8), 0 0 12px var(--border-red);
+            color: var(--text-bright);
+            text-shadow: 0 0 5px var(--text-bright), 0 0 10px var(--pink-accent);
             margin-bottom: 20px;
-            box-shadow: inset 0 0 15px rgba(255, 26, 64, 0.25);
+            box-shadow: inset 0 0 15px rgba(255, 59, 141, 0.3);
+            position: relative;
         }
 
         .display-screen::-webkit-scrollbar, .library-list::-webkit-scrollbar {
@@ -115,26 +157,27 @@
         }
 
         .display-screen::-webkit-scrollbar-track, .library-list::-webkit-scrollbar-track {
-            background: #000000;
+            background: #050206;
         }
 
         .display-screen::-webkit-scrollbar-thumb, .library-list::-webkit-scrollbar-thumb {
-            background: var(--dark-red);
-            border: 1px solid var(--border-red);
+            background: var(--pink-dim);
+            border: 1px solid var(--pink-accent);
         }
 
         .input-field {
             width: 100%;
             padding: 12px;
             font-family: 'Press Start 2P', monospace;
-            font-size: 0.8rem;
-            border: 2px solid var(--border-red);
-            background-color: #000000;
-            color: var(--input-text);
+            font-size: 0.75rem;
+            border: 2px solid var(--pink-dim);
+            background-color: #080309;
+            color: var(--pink-bright);
             outline: none;
             margin-bottom: 12px;
-            box-shadow: inset 0 0 10px rgba(255, 26, 64, 0.3);
+            box-shadow: inset 0 0 8px rgba(255, 59, 141, 0.2);
             text-align: center;
+            transition: all 0.2s;
         }
 
         .text-area-input {
@@ -145,12 +188,12 @@
         }
 
         .input-field::placeholder {
-            color: var(--text-dim);
+            color: var(--pink-dim);
         }
 
         .input-field:focus {
-            border-color: var(--bright-red);
-            box-shadow: var(--glow-red);
+            border-color: var(--pink-accent);
+            box-shadow: 0 0 10px var(--pink-glow);
         }
 
         .controls {
@@ -163,19 +206,21 @@
 
         button {
             font-family: 'Press Start 2P', monospace;
-            padding: 10px 16px;
+            padding: 12px 18px;
             font-size: 0.65rem;
-            border: 2px solid var(--border-red);
-            background-color: var(--dark-red);
+            border: 2px solid var(--pink-accent);
+            background-color: var(--pink-dim);
             color: #ffffff;
             cursor: pointer;
             box-shadow: 3px 3px 0px #000;
-            transition: all 0.1s;
+            transition: all 0.15s;
+            clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
         }
 
         button:hover {
-            background-color: var(--border-red);
-            box-shadow: var(--glow-red);
+            background-color: var(--pink-accent);
+            box-shadow: 0 0 12px var(--pink-glow);
+            color: #000;
         }
 
         button:active {
@@ -185,26 +230,29 @@
 
         .section-title {
             align-self: flex-start;
-            font-size: 0.7rem;
-            color: var(--bright-red);
+            font-size: 0.65rem;
+            color: var(--pink-bright);
             margin-bottom: 8px;
             text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .error-msg {
-            color: #ff3333;
+            color: #ff3366;
             font-size: 0.65rem;
             margin-bottom: 15px;
             text-align: center;
+            text-shadow: 0 0 5px rgba(255, 51, 102, 0.8);
         }
 
-        /* Library Styling */
+        /* Cyber Library Section */
         .library-container {
             width: 100%;
-            border: 2px solid var(--dark-red);
-            background-color: #000000;
+            border: 2px solid var(--pink-dim);
+            background-color: #080309;
             padding: 15px;
             margin-bottom: 20px;
+            box-shadow: inset 0 0 10px rgba(255, 59, 141, 0.15);
         }
 
         .library-list {
@@ -220,22 +268,22 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: #120202;
-            border: 1px solid var(--border-red);
+            background-color: rgba(22, 10, 24, 0.95);
+            border: 1px solid var(--pink-accent);
             padding: 8px 12px;
-            font-size: 0.65rem;
+            font-size: 0.6rem;
         }
 
         .library-item-title {
-            color: var(--bright-red);
+            color: var(--pink-bright);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            max-width: 250px;
+            max-width: 230px;
         }
 
         .library-item-pass {
-            color: var(--text-dim);
+            color: var(--pink-dim);
             font-size: 0.55rem;
             margin-left: 8px;
         }
@@ -253,75 +301,78 @@
 </head>
 <body>
 
-<div class="container">
+<div class="cyber-wrapper">
+    <div class="container">
+        <div class="cyber-header-tab">CYBER // V1.0</div>
 
-    <!-- ROLE SELECTION PAGE -->
-    <div id="role-page" class="view-section">
-        <h1>[SYSTEM ACCESS]</h1>
-        <p style="font-size: 0.7rem; margin-bottom: 25px; color: var(--text-dim);">SELECT YOUR ACCESS LEVEL</p>
-        <div class="role-selection">
-            <button id="select-viewer-btn">VIEWER</button>
-            <button id="select-admin-btn">ADMIN</button>
-        </div>
-    </div>
-
-    <!-- VIEWER AUTH -->
-    <div id="viewer-auth-page" class="view-section hidden">
-        <h1>[VIEWER AUTHENTICATION]</h1>
-        <input type="password" id="viewer-pass-input" class="input-field" placeholder="ENTER LYRIC PASSWORD" autofocus>
-        <div id="viewer-auth-error" class="error-msg hidden">INVALID PASSWORD</div>
-        <div class="controls">
-            <button id="viewer-login-btn">ACCESS</button>
-            <button id="viewer-back-btn">BACK</button>
-        </div>
-    </div>
-
-    <!-- ADMIN AUTH -->
-    <div id="admin-auth-page" class="view-section hidden">
-        <h1>[ADMIN AUTHENTICATION]</h1>
-        <input type="password" id="admin-pass-input" class="input-field" placeholder="ENTER ADMIN PASSWORD" autofocus>
-        <div id="admin-auth-error" class="error-msg hidden">INVALID PASSWORD</div>
-        <div class="controls">
-            <button id="admin-login-btn">ACCESS</button>
-            <button id="admin-back-btn">BACK</button>
-        </div>
-    </div>
-
-    <!-- VIEWER UI -->
-    <div id="viewer-ui" class="view-section hidden">
-        <h1>[LIVE LYRIC SCREEN]</h1>
-        <div id="viewer-display" class="display-screen">Awaiting broadcast...</div>
-        <div class="controls">
-            <button id="viewer-logout-btn">LOGOUT</button>
-        </div>
-    </div>
-
-    <!-- ADMIN UI -->
-    <div id="admin-ui" class="view-section hidden">
-        <h1>[ADMIN TERMINAL]</h1>
-        
-        <div class="section-title">LIVE PREVIEW SCREEN:</div>
-        <div id="admin-preview-display" class="display-screen">Awaiting broadcast...</div>
-
-        <!-- LIBRARY SECTION -->
-        <div class="section-title">LYRIC LIBRARY:</div>
-        <div class="library-container">
-            <div id="library-list" class="library-list"></div>
-            <input type="text" id="song-title-input" class="input-field" placeholder="TITLE / SONG NAME" style="text-align: left; margin-bottom: 8px;">
-            <input type="text" id="song-pass-input" class="input-field" placeholder="ASSIGN VIEWER PASSWORD FOR THIS LYRIC" style="text-align: left; margin-bottom: 8px;">
-            <textarea id="admin-text-input" class="input-field text-area-input" placeholder="PASTE OR TYPE LYRICS HERE..."></textarea>
-            <div class="controls" style="margin-top: 5px;">
-                <button id="save-library-btn">SAVE TO LIBRARY</button>
-                <button id="broadcast-btn">BROADCAST LYRICS</button>
-                <button id="admin-clear-btn">CLEAR</button>
+        <!-- ROLE SELECTION PAGE -->
+        <div id="role-page" class="view-section">
+            <h1>[PINK SOFT CYBER]</h1>
+            <p style="font-size: 0.65rem; margin-bottom: 25px; color: var(--text-main);">SELECT ACCESS TERMINAL</p>
+            <div class="role-selection">
+                <button id="select-viewer-btn">VIEWER</button>
+                <button id="select-admin-btn">ADMIN</button>
             </div>
         </div>
-        
-        <div class="controls">
-            <button id="admin-logout-btn">LOGOUT</button>
-        </div>
-    </div>
 
+        <!-- VIEWER AUTH -->
+        <div id="viewer-auth-page" class="view-section hidden">
+            <h1>[VIEWER AUTHENTICATION]</h1>
+            <input type="password" id="viewer-pass-input" class="input-field" placeholder="ENTER LYRIC PASSWORD" autofocus>
+            <div id="viewer-auth-error" class="error-msg hidden">ACCESS DENIED: INVALID PASSWORD</div>
+            <div class="controls">
+                <button id="viewer-login-btn">CONNECT</button>
+                <button id="viewer-back-btn">RETURN</button>
+            </div>
+        </div>
+
+        <!-- ADMIN AUTH -->
+        <div id="admin-auth-page" class="view-section hidden">
+            <h1>[ADMIN AUTHENTICATION]</h1>
+            <input type="password" id="admin-pass-input" class="input-field" placeholder="ENTER ADMIN PASSWORD" autofocus>
+            <div id="admin-auth-error" class="error-msg hidden">ACCESS DENIED: INVALID PASSWORD</div>
+            <div class="controls">
+                <button id="admin-login-btn">CONNECT</button>
+                <button id="admin-back-btn">RETURN</button>
+            </div>
+        </div>
+
+        <!-- VIEWER UI -->
+        <div id="viewer-ui" class="view-section hidden">
+            <h1>[LIVE BROADCAST STREAM]</h1>
+            <div id="viewer-display" class="display-screen">Awaiting broadcast stream...</div>
+            <div class="controls">
+                <button id="viewer-logout-btn">DISCONNECT</button>
+            </div>
+        </div>
+
+        <!-- ADMIN UI -->
+        <div id="admin-ui" class="view-section hidden">
+            <h1>[CYBER CONTROL TERMINAL]</h1>
+            
+            <div class="section-title">LIVE MONITOR PREVIEW:</div>
+            <div id="admin-preview-display" class="display-screen">Awaiting broadcast stream...</div>
+
+            <!-- LIBRARY SECTION -->
+            <div class="section-title">CYBER LYRIC LIBRARY:</div>
+            <div class="library-container">
+                <div id="library-list" class="library-list"></div>
+                <input type="text" id="song-title-input" class="input-field" placeholder="TRACK / SONG TITLE" style="text-align: left; margin-bottom: 8px;">
+                <input type="text" id="song-pass-input" class="input-field" placeholder="ASSIGN VIEWER PASSWORD FOR THIS LYRIC" style="text-align: left; margin-bottom: 8px;">
+                <textarea id="admin-text-input" class="input-field text-area-input" placeholder="PASTE OR TYPE LYRICS HERE..."></textarea>
+                <div class="controls" style="margin-top: 5px;">
+                    <button id="save-library-btn">SAVE TO LIBRARY</button>
+                    <button id="broadcast-btn">BROADCAST LYRICS</button>
+                    <button id="admin-clear-btn">CLEAR</button>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button id="admin-logout-btn">DISCONNECT</button>
+            </div>
+        </div>
+
+    </div>
 </div>
 
 <script>
@@ -371,7 +422,6 @@
 
     let viewerTypeInterval = null;
     let adminTypeInterval = null;
-    let activeViewerPassword = null;
 
     function hideAllPages() {
         rolePage.classList.add('hidden');
@@ -403,7 +453,7 @@
         clearInterval(viewerTypeInterval);
         clearInterval(adminTypeInterval);
 
-        const text = (broadcastData && broadcastData.text) ? broadcastData.text : "Awaiting broadcast...";
+        const text = (broadcastData && broadcastData.text) ? broadcastData.text : "Awaiting broadcast stream...";
 
         if (!viewerUi.classList.contains('hidden')) {
             startTypewriter(viewerDisplay, text, (inv) => viewerTypeInterval = inv);
@@ -435,7 +485,7 @@
         libraryList.innerHTML = '';
 
         if (library.length === 0) {
-            libraryList.innerHTML = '<div style="font-size:0.6rem; color:var(--text-dim); text-align:center;">NO SAVED LYRICS IN LIBRARY</div>';
+            libraryList.innerHTML = '<div style="font-size:0.55rem; color:var(--pink-dim); text-align:center;">NO SAVED LYRICS IN LIBRARY</div>';
             return;
         }
 
@@ -519,23 +569,19 @@
         const enteredPass = viewerPassInput.value.trim();
         const broadcastData = getBroadcastData();
 
-        // Check if entered password matches broadcast password (or if no password set/default allowed)
         if (broadcastData && broadcastData.password) {
             if (enteredPass === broadcastData.password) {
                 hideAllPages();
                 viewerUi.classList.remove('hidden');
-                activeViewerPassword = enteredPass;
                 renderBroadcast(broadcastData);
             } else {
                 viewerAuthError.classList.remove('hidden');
             }
         } else {
-            // Default fallback if broadcast password is empty or default
             if (enteredPass === "viewer" || !broadcastData || !broadcastData.password) {
                 hideAllPages();
                 viewerUi.classList.remove('hidden');
-                activeViewerPassword = enteredPass;
-                renderBroadcast(broadcastData || { text: "Awaiting broadcast..." });
+                renderBroadcast(broadcastData || { text: "Awaiting broadcast stream..." });
             } else {
                 viewerAuthError.classList.remove('hidden');
             }
@@ -561,7 +607,6 @@
     // Logout Handlers
     viewerLogoutBtn.addEventListener('click', () => {
         clearInterval(viewerTypeInterval);
-        activeViewerPassword = null;
         hideAllPages();
         rolePage.classList.remove('hidden');
     });
@@ -574,7 +619,7 @@
 
     // Admin Broadcast Action
     broadcastBtn.addEventListener('click', () => {
-        const text = adminTextInput.value.trim() === '' ? 'Awaiting broadcast...' : adminTextInput.value;
+        const text = adminTextInput.value.trim() === '' ? 'Awaiting broadcast stream...' : adminTextInput.value;
         const password = songPassInput.value.trim();
         const broadcastData = { text, password };
         localStorage.setItem(BROADCAST_KEY, JSON.stringify(broadcastData));
@@ -585,7 +630,7 @@
         adminTextInput.value = '';
         songTitleInput.value = '';
         songPassInput.value = '';
-        const defaultData = { text: 'Awaiting broadcast...', password: '' };
+        const defaultData = { text: 'Awaiting broadcast stream...', password: '' };
         localStorage.setItem(BROADCAST_KEY, JSON.stringify(defaultData));
         renderBroadcast(defaultData);
     });
