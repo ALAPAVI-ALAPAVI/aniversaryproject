@@ -6,6 +6,7 @@
     <title>Pink Cyber Lyric Terminal</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
             --bg-dark: #0a050b;
@@ -36,14 +37,12 @@
             padding: 20px;
             position: relative;
             overflow-x: hidden;
-            /* Cyber grid background */
             background-image: 
                 linear-gradient(rgba(255, 59, 141, 0.07) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(255, 59, 141, 0.07) 1px, transparent 1px);
             background-size: 30px 30px;
         }
 
-        /* Scanline Overlay */
         body::before {
             content: " ";
             display: block;
@@ -61,7 +60,6 @@
             width: 100%;
         }
 
-        /* Futuristic Corner Accents */
         .cyber-wrapper::before, .cyber-wrapper::after {
             content: "";
             position: absolute;
@@ -93,7 +91,6 @@
             );
         }
 
-        /* Top Header Strip */
         .cyber-header-tab {
             position: absolute;
             top: -15px;
@@ -133,7 +130,6 @@
             margin-bottom: 20px;
         }
 
-        /* Cyberpunk Framed Display Screen */
         .display-screen {
             width: 100%;
             min-height: 220px;
@@ -246,7 +242,12 @@
             text-shadow: 0 0 5px rgba(255, 51, 102, 0.8);
         }
 
-        /* Cyber Library Section */
+        .status-tag {
+            font-size: 0.55rem;
+            color: var(--pink-bright);
+            margin-bottom: 10px;
+        }
+
         .library-container {
             width: 100%;
             border: 2px solid var(--pink-dim);
@@ -299,7 +300,6 @@
             font-size: 0.55rem;
         }
 
-        /* QR Code Modal Styling */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -378,6 +378,7 @@
         <!-- VIEWER UI -->
         <div id="viewer-ui" class="view-section hidden">
             <h1>[LIVE BROADCAST STREAM]</h1>
+            <div class="status-tag" id="viewer-status-text">NETWORK: CONNECTING...</div>
             <div id="viewer-display" class="display-screen">Awaiting broadcast stream...</div>
             <div class="controls">
                 <button id="viewer-logout-btn">DISCONNECT</button>
@@ -387,6 +388,7 @@
         <!-- ADMIN UI -->
         <div id="admin-ui" class="view-section hidden">
             <h1>[CYBER CONTROL TERMINAL]</h1>
+            <div class="status-tag" id="admin-status-text">BROADCAST SERVER: INITIALIZING...</div>
             
             <div class="section-title">LIVE MONITOR PREVIEW:</div>
             <div id="admin-preview-display" class="display-screen">Awaiting broadcast stream...</div>
@@ -418,7 +420,7 @@
 <div id="qr-modal" class="modal-overlay hidden">
     <div class="modal-card">
         <h1 style="font-size: 0.8rem; margin: 0;">[VIEWER QR LINK]</h1>
-        <p style="font-size: 0.55rem; color: var(--text-main); margin-top: 8px; text-align: center;" id="qr-modal-info">SCAN TO AUTO-AUTHENTICATE</p>
+        <p style="font-size: 0.55rem; color: var(--text-main); margin-top: 8px; text-align: center;">SCAN TO CONNECT FROM ANY DEVICE</p>
         <div class="qr-wrapper">
             <div id="qrcode"></div>
         </div>
@@ -428,31 +430,23 @@
 </div>
 
 <script>
-    // Configurable Admin Master Password
     const ADMIN_PASSWORD = "admin";
-
-    // Slowed-down typewriter pace (75ms per character)
     const TYPING_SPEED = 75;
-
-    // Storage Keys
-    const BROADCAST_KEY = "retro_lyric_broadcast";
     const LIBRARY_KEY = "retro_lyric_library";
+    const ADMIN_PEER_ID = "aniversaryproject-admin-host-998877";
 
-    // View Elements
     const rolePage = document.getElementById('role-page');
     const viewerAuthPage = document.getElementById('viewer-auth-page');
     const adminAuthPage = document.getElementById('admin-auth-page');
     const viewerUi = document.getElementById('viewer-ui');
     const adminUi = document.getElementById('admin-ui');
 
-    // QR Modal Elements
     const qrModal = document.getElementById('qr-modal');
     const qrContainer = document.getElementById('qrcode');
     const qrPassLabel = document.getElementById('qr-pass-label');
     const closeQrBtn = document.getElementById('close-qr-btn');
     const adminQrBtn = document.getElementById('admin-qr-btn');
 
-    // Inputs & Controls
     const selectViewerBtn = document.getElementById('select-viewer-btn');
     const selectAdminBtn = document.getElementById('select-admin-btn');
     
@@ -479,8 +473,16 @@
     const adminLogoutBtn = document.getElementById('admin-logout-btn');
     const viewerLogoutBtn = document.getElementById('viewer-logout-btn');
 
+    const adminStatusText = document.getElementById('admin-status-text');
+    const viewerStatusText = document.getElementById('viewer-status-text');
+
     let viewerTypeInterval = null;
     let adminTypeInterval = null;
+
+    let peer = null;
+    let adminConnections = [];
+    let viewerConnection = null;
+    let currentBroadcastData = { text: "Awaiting broadcast stream...", password: "" };
 
     function hideAllPages() {
         rolePage.classList.add('hidden');
@@ -523,12 +525,112 @@
         }
     }
 
-    function getBroadcastData() {
-        const data = localStorage.getItem(BROADCAST_KEY);
-        return data ? JSON.parse(data) : null;
+    function initAdminPeer() {
+        if (peer) peer.destroy();
+
+        peer = new Peer(ADMIN_PEER_ID, { debug: 1 });
+
+        peer.on('open', (id) => {
+            adminStatusText.innerText = "BROADCAST SERVER: ONLINE";
+            adminStatusText.style.color = "#00ffcc";
+        });
+
+        peer.on('connection', (conn) => {
+            adminConnections.push(conn);
+
+            conn.on('open', () => {
+                conn.send({ type: 'SYNC', data: currentBroadcastData });
+            });
+
+            conn.on('close', () => {
+                adminConnections = adminConnections.filter(c => c !== conn);
+            });
+        });
+
+        peer.on('error', (err) => {
+            if (err.type === 'unavailable-id') {
+                adminStatusText.innerText = "BROADCAST SERVER: ACTIVE (CONNECTED)";
+                adminStatusText.style.color = "#00ffcc";
+            } else {
+                adminStatusText.innerText = "BROADCAST SERVER: ERROR (" + err.type + ")";
+                adminStatusText.style.color = "#ff3366";
+            }
+        });
     }
 
-    // Library Functions
+    function broadcastToRemoteViewers(data) {
+        currentBroadcastData = data;
+        localStorage.setItem("retro_lyric_broadcast", JSON.stringify(data));
+        
+        adminConnections.forEach(conn => {
+            if (conn.open) {
+                conn.send({ type: 'LYRIC_UPDATE', data: data });
+            }
+        });
+
+        renderBroadcast(data);
+    }
+
+    function initViewerPeer(enteredPass) {
+        if (peer) peer.destroy();
+
+        peer = new Peer();
+
+        peer.on('open', () => {
+            viewerStatusText.innerText = "NETWORK: CONNECTING TO HOST...";
+            viewerConnection = peer.connect(ADMIN_PEER_ID);
+
+            viewerConnection.on('open', () => {
+                viewerStatusText.innerText = "NETWORK: STREAM LIVE";
+                viewerStatusText.style.color = "#00ffcc";
+            });
+
+            viewerConnection.on('data', (msg) => {
+                if (msg.type === 'SYNC' || msg.type === 'LYRIC_UPDATE') {
+                    const data = msg.data;
+                    checkAndApplyViewerAuth(enteredPass, data);
+                }
+            });
+
+            viewerConnection.on('close', () => {
+                viewerStatusText.innerText = "NETWORK: HOST DISCONNECTED";
+                viewerStatusText.style.color = "#ff3366";
+            });
+        });
+
+        peer.on('error', (err) => {
+            viewerStatusText.innerText = "NETWORK: OFFLINE / LOCAL MODE";
+            const localData = localStorage.getItem("retro_lyric_broadcast");
+            if (localData) {
+                checkAndApplyViewerAuth(enteredPass, JSON.parse(localData));
+            }
+        });
+    }
+
+    function checkAndApplyViewerAuth(enteredPass, broadcastData) {
+        if (broadcastData && broadcastData.password) {
+            if (enteredPass === broadcastData.password) {
+                hideAllPages();
+                viewerUi.classList.remove('hidden');
+                renderBroadcast(broadcastData);
+            } else {
+                hideAllPages();
+                viewerAuthPage.classList.remove('hidden');
+                viewerAuthError.classList.remove('hidden');
+            }
+        } else {
+            if (enteredPass === "viewer" || !broadcastData || !broadcastData.password) {
+                hideAllPages();
+                viewerUi.classList.remove('hidden');
+                renderBroadcast(broadcastData || { text: "Awaiting broadcast stream..." });
+            } else {
+                hideAllPages();
+                viewerAuthPage.classList.remove('hidden');
+                viewerAuthError.classList.remove('hidden');
+            }
+        }
+    }
+
     function getLibrary() {
         const saved = localStorage.getItem(LIBRARY_KEY);
         return saved ? JSON.parse(saved) : [];
@@ -582,7 +684,6 @@
         saveLibrary(library);
     };
 
-    // QR Code Modal Generation
     function showQrModalForPass(password) {
         qrContainer.innerHTML = '';
         const baseUrl = window.location.origin + window.location.pathname;
@@ -627,7 +728,6 @@
         songPassInput.value = '';
     });
 
-    // Role Navigation
     selectViewerBtn.addEventListener('click', () => {
         hideAllPages();
         viewerAuthPage.classList.remove('hidden');
@@ -654,35 +754,9 @@
         rolePage.classList.remove('hidden');
     });
 
-    // Auth Handlers
-    function authenticateViewer(enteredPass) {
-        const broadcastData = getBroadcastData();
-
-        if (broadcastData && broadcastData.password) {
-            if (enteredPass === broadcastData.password) {
-                hideAllPages();
-                viewerUi.classList.remove('hidden');
-                renderBroadcast(broadcastData);
-                return true;
-            } else {
-                viewerAuthError.classList.remove('hidden');
-                return false;
-            }
-        } else {
-            if (enteredPass === "viewer" || !broadcastData || !broadcastData.password) {
-                hideAllPages();
-                viewerUi.classList.remove('hidden');
-                renderBroadcast(broadcastData || { text: "Awaiting broadcast stream..." });
-                return true;
-            } else {
-                viewerAuthError.classList.remove('hidden');
-                return false;
-            }
-        }
-    }
-
     viewerLoginBtn.addEventListener('click', () => {
-        authenticateViewer(viewerPassInput.value.trim());
+        const enteredPass = viewerPassInput.value.trim();
+        initViewerPeer(enteredPass);
     });
 
     adminLoginBtn.addEventListener('click', () => {
@@ -690,37 +764,39 @@
             hideAllPages();
             adminUi.classList.remove('hidden');
             renderLibrary();
-            const currentBroadcast = getBroadcastData();
-            if (currentBroadcast) {
-                adminTextInput.value = currentBroadcast.text || "";
-                songPassInput.value = currentBroadcast.password || "";
+            initAdminPeer();
+
+            const savedLocal = localStorage.getItem("retro_lyric_broadcast");
+            if (savedLocal) {
+                currentBroadcastData = JSON.parse(savedLocal);
+                adminTextInput.value = currentBroadcastData.text || "";
+                songPassInput.value = currentBroadcastData.password || "";
             }
-            renderBroadcast(currentBroadcast);
+            renderBroadcast(currentBroadcastData);
         } else {
             adminAuthError.classList.remove('hidden');
         }
     });
 
-    // Logout Handlers
     viewerLogoutBtn.addEventListener('click', () => {
         clearInterval(viewerTypeInterval);
+        if (peer) peer.destroy();
         hideAllPages();
         rolePage.classList.remove('hidden');
     });
 
     adminLogoutBtn.addEventListener('click', () => {
         clearInterval(adminTypeInterval);
+        if (peer) peer.destroy();
         hideAllPages();
         rolePage.classList.remove('hidden');
     });
 
-    // Admin Broadcast Action
     broadcastBtn.addEventListener('click', () => {
         const text = adminTextInput.value.trim() === '' ? 'Awaiting broadcast stream...' : adminTextInput.value;
         const password = songPassInput.value.trim();
         const broadcastData = { text, password };
-        localStorage.setItem(BROADCAST_KEY, JSON.stringify(broadcastData));
-        renderBroadcast(broadcastData);
+        broadcastToRemoteViewers(broadcastData);
     });
 
     adminClearBtn.addEventListener('click', () => {
@@ -728,22 +804,19 @@
         songTitleInput.value = '';
         songPassInput.value = '';
         const defaultData = { text: 'Awaiting broadcast stream...', password: '' };
-        localStorage.setItem(BROADCAST_KEY, JSON.stringify(defaultData));
-        renderBroadcast(defaultData);
+        broadcastToRemoteViewers(defaultData);
     });
 
-    // Auto-login via QR Code Link URL parameter ?pass=...
     window.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
         const passParam = urlParams.get('pass');
         if (passParam !== null) {
-            authenticateViewer(passParam);
+            initViewerPeer(passParam);
         }
     });
 
-    // Listen for storage updates across tabs/windows in real time
     window.addEventListener('storage', (e) => {
-        if (e.key === BROADCAST_KEY) {
+        if (e.key === "retro_lyric_broadcast") {
             const data = e.newValue ? JSON.parse(e.newValue) : null;
             renderBroadcast(data);
         }
