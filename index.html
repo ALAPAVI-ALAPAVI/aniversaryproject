@@ -3,18 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel Ship Destroyer</title>
+    <title>Pixel Plumber Platformer</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #050000;
-            --card-bg: #120202;
+            --bg-color: #5c94fc;
             --border-red: #ff0033;
             --dark-red: #660014;
-            --bright-red: #ff3355;
-            --text-main: #ff4d4d;
-            --text-dim: #881111;
-            --glow-red: 0 0 10px rgba(255, 0, 51, 0.8), 0 0 20px rgba(255, 0, 51, 0.4);
+            --text-main: #ffffff;
+            --glow-red: 0 0 10px rgba(255, 0, 51, 0.8);
         }
 
         * {
@@ -24,7 +21,7 @@
 
         body {
             font-family: 'Press Start 2P', monospace;
-            background-color: var(--bg-color);
+            background-color: #050000;
             color: var(--text-main);
             display: flex;
             justify-content: center;
@@ -42,18 +39,18 @@
             display: block;
             position: absolute;
             top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.75) 50%);
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.6) 50%);
             background-size: 100% 4px;
             z-index: 100;
             pointer-events: none;
         }
 
         .container {
-            background-color: var(--card-bg);
+            background-color: #120202;
             padding: 20px;
             border: 4px solid var(--border-red);
             box-shadow: var(--glow-red), inset 0 0 15px rgba(255, 0, 51, 0.3);
-            max-width: 800px;
+            max-width: 840px;
             width: 100%;
             display: flex;
             flex-direction: column;
@@ -64,7 +61,7 @@
 
         h1 {
             margin: 0 0 15px 0;
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             color: var(--border-red);
             text-shadow: var(--glow-red);
             text-align: center;
@@ -86,7 +83,7 @@
         }
 
         .stat-value {
-            font-size: 1rem;
+            font-size: 0.9rem;
             font-weight: bold;
             color: var(--border-red);
             text-shadow: var(--glow-red);
@@ -95,93 +92,24 @@
 
         .stat-label {
             font-size: 0.5rem;
-            color: var(--text-dim);
+            color: #881111;
             text-transform: uppercase;
         }
 
-        #game-screen {
-            width: 100%;
-            height: 380px;
-            background-color: #000000;
+        #game-canvas {
+            background-color: var(--bg-color);
             border: 2px solid var(--dark-red);
-            position: relative;
-            overflow: hidden;
-            margin-bottom: 15px;
+            display: block;
+            width: 800px;
+            height: 400px;
         }
 
-        .enemy-ship {
-            position: absolute;
-            color: var(--bright-red);
-            font-size: 0.75rem;
-            white-space: nowrap;
-            text-shadow: var(--glow-red);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            transform: translateX(-50%);
-        }
-
-        .enemy-ship::before {
-            content: "<V>";
-            font-weight: bold;
-            color: #ff0033;
-            margin-bottom: 2px;
-        }
-
-        .matched {
-            color: #ffffff;
-            text-shadow: 0 0 8px #ffffff;
-        }
-
-        #player-ship {
-            position: absolute;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #ffffff;
-            font-size: 1.2rem;
-            text-shadow: var(--glow-red);
-            transition: left 0.1s ease-out;
-        }
-
-        .laser {
-            position: absolute;
-            width: 4px;
-            background-color: var(--border-red);
-            box-shadow: var(--glow-red);
-            transform: translateX(-50%);
-        }
-
-        .explosion {
-            position: absolute;
-            color: #ffffff;
-            font-size: 1.5rem;
-            transform: translate(-50%, -50%);
-            animation: explode 0.3s forwards;
-        }
-
-        @keyframes explode {
-            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
-        }
-
-        .typing-input {
-            width: 100%;
-            padding: 12px;
-            font-family: 'Press Start 2P', monospace;
-            font-size: 0.8rem;
-            border: 2px solid var(--dark-red);
-            background-color: #000000;
-            color: var(--border-red);
-            outline: none;
-            margin-bottom: 15px;
-            box-shadow: inset 0 0 8px rgba(255, 0, 51, 0.3);
+        .controls-hint {
+            margin-top: 15px;
+            font-size: 0.55rem;
+            color: #ff3355;
             text-align: center;
-        }
-
-        .typing-input:focus {
-            border-color: var(--border-red);
-            box-shadow: var(--glow-red);
+            line-height: 1.6;
         }
 
         button {
@@ -194,6 +122,7 @@
             cursor: pointer;
             box-shadow: 3px 3px 0px #000;
             transition: all 0.1s;
+            margin-top: 15px;
         }
 
         button:hover {
@@ -205,246 +134,388 @@
             transform: translate(2px, 2px);
             box-shadow: 1px 1px 0px #000;
         }
-
-        .game-over-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(5, 0, 0, 0.9);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 50;
-        }
-
-        .game-over-title {
-            color: var(--border-red);
-            text-shadow: var(--glow-red);
-            font-size: 1.2rem;
-            margin-bottom: 15px;
-        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>[SHIP_DESTROYER]</h1>
+    <h1>[SUPER_MARIO_MOCK]</h1>
 
     <div class="stats-bar">
         <div class="stat-item">
-            <div id="score" class="stat-value">0</div>
+            <div id="score" class="stat-value">000000</div>
             <div class="stat-label">SCORE</div>
         </div>
         <div class="stat-item">
-            <div id="health" class="stat-value">100%</div>
-            <div class="stat-label">HULL INTEGRITY</div>
+            <div id="coins" class="stat-value">x00</div>
+            <div class="stat-label">COINS</div>
         </div>
         <div class="stat-item">
-            <div id="wpm" class="stat-value">0</div>
-            <div class="stat-label">WPM</div>
+            <div id="lives" class="stat-value">3</div>
+            <div class="stat-label">LIVES</div>
         </div>
     </div>
 
-    <div id="game-screen">
-        <div id="player-ship">A/\A</div>
-        <div id="overlay" class="game-over-overlay" style="display: none;">
-            <div id="overlay-title" class="game-over-title">SHIP DESTROYED</div>
-            <button onclick="startGame()">RESTART MISSION</button>
-        </div>
+    <canvas id="game-canvas" width="800" height="400"></canvas>
+
+    <div class="controls-hint">
+        CONTROLS: [A / D] or [LEFT / RIGHT] = MOVE | [W / SPACE / UP] = JUMP
     </div>
 
-    <input type="text" id="typing-input" class="typing-input" placeholder="TYPE WORD TO DESTROY..." autofocus autocomplete="off" spellcheck="false">
-
-    <button id="start-btn">START MISSION</button>
+    <button id="restart-btn">RESET GAME</button>
 </div>
 
 <script>
-    const wordList = [
-        "laser", "destroy", "vector", "attack", "matrix", "shield", "orbit", 
-        "nexus", "kernel", "binary", "system", "signal", "photon", "cyborg",
-        "plasma", "rocket", "runner", "danger", "target", "render", "deploy",
-        "module", "struct", "memory", "buffer", "static", "vector", "compile"
-    ];
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+
+    const scoreElem = document.getElementById('score');
+    const coinsElem = document.getElementById('coins');
+    const livesElem = document.getElementById('lives');
+    const restartBtn = document.getElementById('restart-btn');
+
+    const GRAVITY = 0.5;
 
     let score = 0;
-    let health = 100;
-    let totalTypedWords = 0;
-    let startTime = null;
-    let enemies = [];
-    let gameLoopInterval = null;
-    let spawnInterval = null;
-    let isPlaying = false;
+    let coins = 0;
+    let lives = 3;
+    let gameOver = false;
+    let gameWon = false;
 
-    const gameScreen = document.getElementById('game-screen');
-    const playerShip = document.getElementById('player-ship');
-    const typingInput = document.getElementById('typing-input');
-    const scoreElement = document.getElementById('score');
-    const healthElement = document.getElementById('health');
-    const wpmElement = document.getElementById('wpm');
-    const overlay = document.getElementById('overlay');
-    const overlayTitle = document.getElementById('overlay-title');
-    const startBtn = document.getElementById('start-btn');
+    let cameraX = 0;
 
-    function startGame() {
-        clearInterval(gameLoopInterval);
-        clearInterval(spawnInterval);
+    const keys = {
+        left: false,
+        right: false,
+        jump: false
+    };
 
-        // Clear existing enemy elements
-        enemies.forEach(e => e.element.remove());
-        enemies = [];
+    class Player {
+        constructor() {
+            this.x = 50;
+            this.y = 200;
+            this.width = 24;
+            this.height = 32;
+            this.vx = 0;
+            this.vy = 0;
+            this.speed = 4;
+            this.jumpPower = -11;
+            this.grounded = false;
+        }
 
-        score = 0;
-        health = 100;
-        totalTypedWords = 0;
-        startTime = Date.now();
-        isPlaying = true;
+        update(platforms) {
+            if (keys.left) this.vx = -this.speed;
+            else if (keys.right) this.vx = this.speed;
+            else this.vx = 0;
 
-        scoreElement.innerText = score;
-        healthElement.innerText = health + '%';
-        wpmElement.innerText = '0';
-        overlay.style.display = 'none';
-        typingInput.value = '';
-        typingInput.disabled = false;
-        typingInput.focus();
+            if (keys.jump && this.grounded) {
+                this.vy = this.jumpPower;
+                this.grounded = false;
+            }
 
-        gameLoopInterval = setInterval(updateGame, 50);
-        spawnInterval = setInterval(spawnEnemy, 2000);
+            this.vy += GRAVITY;
+
+            // X Movement & Platform Collision
+            this.x += this.vx;
+            for (let p of platforms) {
+                if (checkRectCollision(this, p)) {
+                    if (this.vx > 0) this.x = p.x - this.width;
+                    else if (this.vx < 0) this.x = p.x + p.width;
+                }
+            }
+
+            // Y Movement & Platform Collision
+            this.y += this.vy;
+            this.grounded = false;
+            for (let p of platforms) {
+                if (checkRectCollision(this, p)) {
+                    if (this.vy > 0) {
+                        this.y = p.y - this.height;
+                        this.vy = 0;
+                        this.grounded = true;
+                    } else if (this.vy < 0) {
+                        this.y = p.y + p.height;
+                        this.vy = 0;
+                    }
+                }
+            }
+
+            // Pit death check
+            if (this.y > canvas.height + 50) {
+                playerDeath();
+            }
+        }
+
+        draw() {
+            // Draw Plumber (Mario Mock)
+            const drawX = this.x - cameraX;
+            // Hat
+            ctx.fillStyle = '#ff0033';
+            ctx.fillRect(drawX + 4, this.y, 16, 6);
+            // Face
+            ctx.fillStyle = '#ffcc99';
+            ctx.fillRect(drawX + 4, this.y + 6, 16, 8);
+            // Overall / Shirt
+            ctx.fillStyle = '#ff0033';
+            ctx.fillRect(drawX + 2, this.y + 14, 20, 8);
+            ctx.fillStyle = '#0033cc';
+            ctx.fillRect(drawX + 4, this.y + 22, 16, 10);
+        }
     }
 
-    function spawnEnemy() {
-        if (!isPlaying) return;
+    class Goomba {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.width = 24;
+            this.height = 24;
+            this.vx = -1.5;
+            this.alive = true;
+        }
 
-        const word = wordList[Math.floor(Math.random() * wordList.length)];
-        const xPos = Math.floor(Math.random() * (gameScreen.clientWidth - 100)) + 50;
+        update(platforms) {
+            if (!this.alive) return;
 
-        const enemyElem = document.createElement('div');
-        enemyElem.classList.add('enemy-ship');
-        enemyElem.style.left = xPos + 'px';
-        enemyElem.style.top = '0px';
-        enemyElem.innerHTML = `<span>${word}</span>`;
+            this.x += this.vx;
 
-        gameScreen.appendChild(enemyElem);
-
-        enemies.push({
-            word: word,
-            x: xPos,
-            y: 0,
-            speed: 1.5 + Math.random() * 1.0,
-            element: enemyElem
-        });
-    }
-
-    function updateGame() {
-        if (!isPlaying) return;
-
-        const targetY = gameScreen.clientHeight - 40;
-
-        for (let i = enemies.length - 1; i >= 0; i--) {
-            const enemy = enemies[i];
-            enemy.y += enemy.speed;
-            enemy.element.style.top = enemy.y + 'px';
-
-            // Enemy reaches ship
-            if (enemy.y >= targetY) {
-                createExplosion(enemy.x, enemy.y);
-                enemy.element.remove();
-                enemies.splice(i, 1);
-                
-                health -= 20;
-                healthElement.innerText = Math.max(0, health) + '%';
-
-                if (health <= 0) {
-                    endGame(false);
+            for (let p of platforms) {
+                if (checkRectCollision(this, p)) {
+                    this.vx *= -1;
+                    break;
                 }
             }
         }
 
-        updateWPM();
-    }
-
-    function updateWPM() {
-        if (!startTime) return;
-        const elapsedMinutes = (Date.now() - startTime) / 60000;
-        if (elapsedMinutes > 0) {
-            const wpm = Math.round(totalTypedWords / elapsedMinutes);
-            wpmElement.innerText = wpm;
+        draw() {
+            if (!this.alive) return;
+            const drawX = this.x - cameraX;
+            ctx.fillStyle = '#994d00';
+            ctx.fillRect(drawX + 2, this.y, 20, 16);
+            ctx.fillRect(drawX, this.y + 16, 24, 8);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(drawX + 4, this.y + 6, 4, 6);
+            ctx.fillRect(drawX + 16, this.y + 6, 4, 6);
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(drawX + 6, this.y + 8, 2, 4);
+            ctx.fillRect(drawX + 14, this.y + 8, 2, 4);
         }
     }
 
-    function fireLaser(targetX, targetY, callback) {
-        const playerX = playerShip.offsetLeft + (playerShip.clientWidth / 2);
-        playerShip.style.left = targetX + 'px';
+    class Coin {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.width = 16;
+            this.height = 16;
+            this.collected = false;
+        }
 
-        const laser = document.createElement('div');
-        laser.classList.add('laser');
-        laser.style.left = targetX + 'px';
-        laser.style.bottom = '30px';
-        laser.style.height = (gameScreen.clientHeight - targetY - 30) + 'px';
-
-        gameScreen.appendChild(laser);
-
-        setTimeout(() => {
-            laser.remove();
-            if (callback) callback();
-        }, 100);
+        draw() {
+            if (this.collected) return;
+            const drawX = this.x - cameraX;
+            ctx.fillStyle = '#fce029';
+            ctx.beginPath();
+            ctx.arc(drawX + 8, this.y + 8, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#e5a100';
+            ctx.fillRect(drawX + 6, this.y + 4, 4, 8);
+        }
     }
 
-    function createExplosion(x, y) {
-        const exp = document.createElement('div');
-        exp.classList.add('explosion');
-        exp.innerText = '*#*';
-        exp.style.left = x + 'px';
-        exp.style.top = y + 'px';
-        gameScreen.appendChild(exp);
-        setTimeout(() => exp.remove(), 300);
+    let player;
+    let platforms = [];
+    let enemies = [];
+    let coinsList = [];
+    let flagPole = { x: 2200, y: 100, width: 10, height: 220 };
+
+    function initLevel() {
+        player = new Player();
+        cameraX = 0;
+        gameOver = false;
+        gameWon = false;
+
+        platforms = [
+            // Ground chunks
+            { x: 0, y: 350, width: 700, height: 50 },
+            { x: 780, y: 350, width: 600, height: 50 },
+            { x: 1450, y: 350, width: 900, height: 50 },
+
+            // Elevated blocks and pipes
+            { x: 200, y: 260, width: 80, height: 20 },
+            { x: 350, y: 200, width: 100, height: 20 },
+            { x: 500, y: 290, width: 40, height: 60 }, // Pipe
+            { x: 900, y: 260, width: 120, height: 20 },
+            { x: 1100, y: 210, width: 80, height: 20 },
+            { x: 1600, y: 290, width: 40, height: 60 }, // Pipe
+            { x: 1800, y: 240, width: 140, height: 20 }
+        ];
+
+        enemies = [
+            new Goomba(400, 326),
+            new Goomba(950, 236),
+            new Goomba(1200, 326),
+            new Goomba(1700, 326)
+        ];
+
+        coinsList = [
+            new Coin(220, 220),
+            new Coin(250, 220),
+            new Coin(370, 160),
+            new Coin(400, 160),
+            new Coin(920, 220),
+            new Coin(950, 220),
+            new Coin(1120, 170),
+            new Coin(1820, 200),
+            new Coin(1860, 200)
+        ];
     }
 
-    function endGame(victory) {
-        isPlaying = false;
-        clearInterval(gameLoopInterval);
-        clearInterval(spawnInterval);
-
-        typingInput.disabled = true;
-        overlay.style.display = 'flex';
-        overlayTitle.innerText = victory ? "MISSION ACCOMPLISHED" : "SHIP DESTROYED";
+    function checkRectCollision(rect1, rect2) {
+        return (
+            rect1.x < rect2.x + rect2.width &&
+            rect1.x + rect1.width > rect2.x &&
+            rect1.y < rect2.y + rect2.height &&
+            rect1.y + rect1.height > rect2.y
+        );
     }
 
-    typingInput.addEventListener('input', () => {
-        if (!isPlaying) return;
+    function playerDeath() {
+        lives--;
+        livesElem.innerText = lives;
+        if (lives <= 0) {
+            gameOver = true;
+        } else {
+            initLevel();
+        }
+    }
 
-        const currentInput = typingInput.value.trim().toLowerCase();
+    function update() {
+        if (gameOver || gameWon) return;
 
-        // Highlight matching prefixes
-        enemies.forEach(enemy => {
-            if (enemy.word.startsWith(currentInput) && currentInput.length > 0) {
-                const matched = enemy.word.substring(0, currentInput.length);
-                const remaining = enemy.word.substring(currentInput.length);
-                enemy.element.querySelector('span').innerHTML = `<span class="matched">${matched}</span>${remaining}`;
-            } else {
-                enemy.element.querySelector('span').innerText = enemy.word;
+        player.update(platforms);
+
+        // Keep camera centered on player
+        cameraX = Math.max(0, player.x - 300);
+
+        // Enemy collision and updates
+        for (let enemy of enemies) {
+            if (!enemy.alive) continue;
+            enemy.update(platforms);
+
+            if (checkRectCollision(player, enemy)) {
+                // Stomp Goomba
+                if (player.vy > 0 && player.y + player.height - player.vy <= enemy.y + 8) {
+                    enemy.alive = false;
+                    player.vy = -7;
+                    score += 100;
+                    scoreElem.innerText = String(score).padStart(6, '0');
+                } else {
+                    playerDeath();
+                }
             }
-        });
-
-        // Check for complete word match
-        const matchedIndex = enemies.findIndex(enemy => enemy.word === currentInput);
-
-        if (matchedIndex !== -1) {
-            const targetEnemy = enemies[matchedIndex];
-            
-            fireLaser(targetEnemy.x, targetEnemy.y, () => {
-                createExplosion(targetEnemy.x, targetEnemy.y);
-                targetEnemy.element.remove();
-                enemies.splice(matchedIndex, 1);
-
-                score += 100;
-                totalTypedWords++;
-                scoreElement.innerText = score;
-                typingInput.value = '';
-            });
         }
+
+        // Coin collection
+        for (let coin of coinsList) {
+            if (!coin.collected && checkRectCollision(player, coin)) {
+                coin.collected = true;
+                coins++;
+                score += 200;
+                coinsElem.innerText = 'x' + String(coins).padStart(2, '0');
+                scoreElem.innerText = String(score).padStart(6, '0');
+            }
+        }
+
+        // Flagpole victory
+        if (checkRectCollision(player, flagPole)) {
+            gameWon = true;
+        }
+    }
+
+    function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw Platforms
+        for (let p of platforms) {
+            const drawX = p.x - cameraX;
+            ctx.fillStyle = '#e75910';
+            ctx.fillRect(drawX, p.y, p.width, p.height);
+            ctx.strokeStyle = '#000000';
+            ctx.strokeRect(drawX, p.y, p.width, p.height);
+        }
+
+        // Draw Coins
+        for (let coin of coinsList) {
+            coin.draw();
+        }
+
+        // Draw Enemies
+        for (let enemy of enemies) {
+            enemy.draw();
+        }
+
+        // Draw Flagpole
+        const flagDrawX = flagPole.x - cameraX;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(flagDrawX, flagPole.y, flagPole.width, flagPole.height);
+        ctx.fillStyle = '#ff0033';
+        ctx.beginPath();
+        ctx.moveTo(flagDrawX, flagPole.y);
+        ctx.lineTo(flagDrawX - 30, flagPole.y + 15);
+        ctx.lineTo(flagDrawX, flagPole.y + 30);
+        ctx.fill();
+
+        // Draw Player
+        player.draw();
+
+        // Render Game Over or Win text
+        if (gameOver) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#ff0033';
+            ctx.font = '20px "Press Start 2P"';
+            ctx.textAlign = 'center';
+            ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2);
+        } else if (gameWon) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#00ff66';
+            ctx.font = '20px "Press Start 2P"';
+            ctx.textAlign = 'center';
+            ctx.fillText('STAGE CLEAR!', canvas.width / 2, canvas.height / 2);
+        }
+    }
+
+    function gameLoop() {
+        update();
+        render();
+        requestAnimationFrame(gameLoop);
+    }
+
+    window.addEventListener('keydown', (e) => {
+        if (['KeyA', 'ArrowLeft'].includes(e.code)) keys.left = true;
+        if (['KeyD', 'ArrowRight'].includes(e.code)) keys.right = true;
+        if (['KeyW', 'Space', 'ArrowUp'].includes(e.code)) keys.jump = true;
     });
 
-    startBtn.addEventListener('click', startGame);
+    window.addEventListener('keyup', (e) => {
+        if (['KeyA', 'ArrowLeft'].includes(e.code)) keys.left = false;
+        if (['KeyD', 'ArrowRight'].includes(e.code)) keys.right = false;
+        if (['KeyW', 'Space', 'ArrowUp'].includes(e.code)) keys.jump = false;
+    });
+
+    restartBtn.addEventListener('click', () => {
+        lives = 3;
+        score = 0;
+        coins = 0;
+        livesElem.innerText = lives;
+        coinsElem.innerText = 'x00';
+        scoreElem.innerText = '000000';
+        initLevel();
+    });
+
+    initLevel();
+    gameLoop();
 </script>
 
 </body>
