@@ -3,15 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel Plumber Platformer</title>
+    <title>Retro Pixel Text Display</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #5c94fc;
+            --bg-color: #050000;
+            --card-bg: #120202;
             --border-red: #ff0033;
             --dark-red: #660014;
-            --text-main: #ffffff;
-            --glow-red: 0 0 10px rgba(255, 0, 51, 0.8);
+            --bright-red: #ff3355;
+            --text-main: #ff4d4d;
+            --text-dim: #881111;
+            --glow-red: 0 0 10px rgba(255, 0, 51, 0.8), 0 0 20px rgba(255, 0, 51, 0.4);
         }
 
         * {
@@ -21,7 +24,7 @@
 
         body {
             font-family: 'Press Start 2P', monospace;
-            background-color: #050000;
+            background-color: var(--bg-color);
             color: var(--text-main);
             display: flex;
             justify-content: center;
@@ -30,7 +33,7 @@
             margin: 0;
             padding: 20px;
             position: relative;
-            overflow: hidden;
+            overflow-x: hidden;
         }
 
         /* CRT Scanline Effect */
@@ -39,18 +42,18 @@
             display: block;
             position: absolute;
             top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.6) 50%);
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.75) 50%);
             background-size: 100% 4px;
             z-index: 100;
             pointer-events: none;
         }
 
         .container {
-            background-color: #120202;
-            padding: 20px;
+            background-color: var(--card-bg);
+            padding: 25px;
             border: 4px solid var(--border-red);
             box-shadow: var(--glow-red), inset 0 0 15px rgba(255, 0, 51, 0.3);
-            max-width: 840px;
+            max-width: 850px;
             width: 100%;
             display: flex;
             flex-direction: column;
@@ -60,61 +63,76 @@
         }
 
         h1 {
-            margin: 0 0 15px 0;
-            font-size: 1.2rem;
+            margin-top: 0;
+            font-size: 1.3rem;
             color: var(--border-red);
             text-shadow: var(--glow-red);
             text-align: center;
             letter-spacing: 2px;
+            margin-bottom: 20px;
         }
 
-        .stats-bar {
-            display: flex;
-            justify-content: space-around;
+        .display-screen {
             width: 100%;
-            margin-bottom: 15px;
-            background-color: #080000;
+            min-height: 250px;
+            max-height: 400px;
+            background-color: #000000;
             border: 2px solid var(--dark-red);
-            padding: 10px;
+            padding: 20px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            color: #ffffff;
+            text-shadow: 0 0 5px #ffffff, 0 0 10px var(--border-red);
+            margin-bottom: 20px;
+            box-shadow: inset 0 0 10px rgba(255, 0, 51, 0.2);
         }
 
-        .stat-item {
-            text-align: center;
+        /* Custom Scrollbar for Display */
+        .display-screen::-webkit-scrollbar {
+            width: 8px;
         }
 
-        .stat-value {
-            font-size: 0.9rem;
-            font-weight: bold;
+        .display-screen::-webkit-scrollbar-track {
+            background: #000000;
+        }
+
+        .display-screen::-webkit-scrollbar-thumb {
+            background: var(--dark-red);
+            border: 1px solid var(--border-red);
+        }
+
+        .text-input {
+            width: 100%;
+            height: 120px;
+            padding: 15px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.75rem;
+            line-height: 1.5;
+            border: 2px solid var(--dark-red);
+            background-color: #000000;
             color: var(--border-red);
-            text-shadow: var(--glow-red);
-            margin-bottom: 5px;
+            outline: none;
+            resize: vertical;
+            margin-bottom: 20px;
+            box-shadow: inset 0 0 8px rgba(255, 0, 51, 0.3);
         }
 
-        .stat-label {
-            font-size: 0.5rem;
-            color: #881111;
-            text-transform: uppercase;
+        .text-input:focus {
+            border-color: var(--border-red);
+            box-shadow: var(--glow-red);
         }
 
-        #game-canvas {
-            background-color: var(--bg-color);
-            border: 2px solid var(--dark-red);
-            display: block;
-            width: 800px;
-            height: 400px;
-        }
-
-        .controls-hint {
-            margin-top: 15px;
-            font-size: 0.55rem;
-            color: #ff3355;
-            text-align: center;
-            line-height: 1.6;
+        .controls {
+            display: flex;
+            gap: 15px;
         }
 
         button {
             font-family: 'Press Start 2P', monospace;
-            padding: 10px 18px;
+            padding: 12px 20px;
             font-size: 0.65rem;
             border: 2px solid var(--border-red);
             background-color: var(--dark-red);
@@ -122,7 +140,6 @@
             cursor: pointer;
             box-shadow: 3px 3px 0px #000;
             transition: all 0.1s;
-            margin-top: 15px;
         }
 
         button:hover {
@@ -139,383 +156,38 @@
 <body>
 
 <div class="container">
-    <h1>[SUPER_MARIO_MOCK]</h1>
+    <h1>[LYRIC_DISPLAY_TERMINAL]</h1>
 
-    <div class="stats-bar">
-        <div class="stat-item">
-            <div id="score" class="stat-value">000000</div>
-            <div class="stat-label">SCORE</div>
-        </div>
-        <div class="stat-item">
-            <div id="coins" class="stat-value">x00</div>
-            <div class="stat-label">COINS</div>
-        </div>
-        <div class="stat-item">
-            <div id="lives" class="stat-value">3</div>
-            <div class="stat-label">LIVES</div>
-        </div>
+    <div id="display-screen" class="display-screen">Enter lyrics or text below to display on terminal screen...</div>
+
+    <textarea id="text-input" class="text-input" placeholder="PASTE LYRICS OR TYPE TEXT HERE..."></textarea>
+
+    <div class="controls">
+        <button id="clear-btn">CLEAR DISPLAY</button>
     </div>
-
-    <canvas id="game-canvas" width="800" height="400"></canvas>
-
-    <div class="controls-hint">
-        CONTROLS: [A / D] or [LEFT / RIGHT] = MOVE | [W / SPACE / UP] = JUMP
-    </div>
-
-    <button id="restart-btn">RESET GAME</button>
 </div>
 
 <script>
-    const canvas = document.getElementById('game-canvas');
-    const ctx = canvas.getContext('2d');
+    const textInput = document.getElementById('text-input');
+    const displayScreen = document.getElementById('display-screen');
+    const clearBtn = document.getElementById('clear-btn');
 
-    const scoreElem = document.getElementById('score');
-    const coinsElem = document.getElementById('coins');
-    const livesElem = document.getElementById('lives');
-    const restartBtn = document.getElementById('restart-btn');
-
-    const GRAVITY = 0.5;
-
-    let score = 0;
-    let coins = 0;
-    let lives = 3;
-    let gameOver = false;
-    let gameWon = false;
-
-    let cameraX = 0;
-
-    const keys = {
-        left: false,
-        right: false,
-        jump: false
-    };
-
-    class Player {
-        constructor() {
-            this.x = 50;
-            this.y = 200;
-            this.width = 24;
-            this.height = 32;
-            this.vx = 0;
-            this.vy = 0;
-            this.speed = 4;
-            this.jumpPower = -11;
-            this.grounded = false;
-        }
-
-        update(platforms) {
-            if (keys.left) this.vx = -this.speed;
-            else if (keys.right) this.vx = this.speed;
-            else this.vx = 0;
-
-            if (keys.jump && this.grounded) {
-                this.vy = this.jumpPower;
-                this.grounded = false;
-            }
-
-            this.vy += GRAVITY;
-
-            // X Movement & Platform Collision
-            this.x += this.vx;
-            for (let p of platforms) {
-                if (checkRectCollision(this, p)) {
-                    if (this.vx > 0) this.x = p.x - this.width;
-                    else if (this.vx < 0) this.x = p.x + p.width;
-                }
-            }
-
-            // Y Movement & Platform Collision
-            this.y += this.vy;
-            this.grounded = false;
-            for (let p of platforms) {
-                if (checkRectCollision(this, p)) {
-                    if (this.vy > 0) {
-                        this.y = p.y - this.height;
-                        this.vy = 0;
-                        this.grounded = true;
-                    } else if (this.vy < 0) {
-                        this.y = p.y + p.height;
-                        this.vy = 0;
-                    }
-                }
-            }
-
-            // Pit death check
-            if (this.y > canvas.height + 50) {
-                playerDeath();
-            }
-        }
-
-        draw() {
-            // Draw Plumber (Mario Mock)
-            const drawX = this.x - cameraX;
-            // Hat
-            ctx.fillStyle = '#ff0033';
-            ctx.fillRect(drawX + 4, this.y, 16, 6);
-            // Face
-            ctx.fillStyle = '#ffcc99';
-            ctx.fillRect(drawX + 4, this.y + 6, 16, 8);
-            // Overall / Shirt
-            ctx.fillStyle = '#ff0033';
-            ctx.fillRect(drawX + 2, this.y + 14, 20, 8);
-            ctx.fillStyle = '#0033cc';
-            ctx.fillRect(drawX + 4, this.y + 22, 16, 10);
-        }
-    }
-
-    class Goomba {
-        constructor(x, y) {
-            this.x = x;
-            this.y = y;
-            this.width = 24;
-            this.height = 24;
-            this.vx = -1.5;
-            this.alive = true;
-        }
-
-        update(platforms) {
-            if (!this.alive) return;
-
-            this.x += this.vx;
-
-            for (let p of platforms) {
-                if (checkRectCollision(this, p)) {
-                    this.vx *= -1;
-                    break;
-                }
-            }
-        }
-
-        draw() {
-            if (!this.alive) return;
-            const drawX = this.x - cameraX;
-            ctx.fillStyle = '#994d00';
-            ctx.fillRect(drawX + 2, this.y, 20, 16);
-            ctx.fillRect(drawX, this.y + 16, 24, 8);
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(drawX + 4, this.y + 6, 4, 6);
-            ctx.fillRect(drawX + 16, this.y + 6, 4, 6);
-            ctx.fillStyle = '#000000';
-            ctx.fillRect(drawX + 6, this.y + 8, 2, 4);
-            ctx.fillRect(drawX + 14, this.y + 8, 2, 4);
-        }
-    }
-
-    class Coin {
-        constructor(x, y) {
-            this.x = x;
-            this.y = y;
-            this.width = 16;
-            this.height = 16;
-            this.collected = false;
-        }
-
-        draw() {
-            if (this.collected) return;
-            const drawX = this.x - cameraX;
-            ctx.fillStyle = '#fce029';
-            ctx.beginPath();
-            ctx.arc(drawX + 8, this.y + 8, 8, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = '#e5a100';
-            ctx.fillRect(drawX + 6, this.y + 4, 4, 8);
-        }
-    }
-
-    let player;
-    let platforms = [];
-    let enemies = [];
-    let coinsList = [];
-    let flagPole = { x: 2200, y: 100, width: 10, height: 220 };
-
-    function initLevel() {
-        player = new Player();
-        cameraX = 0;
-        gameOver = false;
-        gameWon = false;
-
-        platforms = [
-            // Ground chunks
-            { x: 0, y: 350, width: 700, height: 50 },
-            { x: 780, y: 350, width: 600, height: 50 },
-            { x: 1450, y: 350, width: 900, height: 50 },
-
-            // Elevated blocks and pipes
-            { x: 200, y: 260, width: 80, height: 20 },
-            { x: 350, y: 200, width: 100, height: 20 },
-            { x: 500, y: 290, width: 40, height: 60 }, // Pipe
-            { x: 900, y: 260, width: 120, height: 20 },
-            { x: 1100, y: 210, width: 80, height: 20 },
-            { x: 1600, y: 290, width: 40, height: 60 }, // Pipe
-            { x: 1800, y: 240, width: 140, height: 20 }
-        ];
-
-        enemies = [
-            new Goomba(400, 326),
-            new Goomba(950, 236),
-            new Goomba(1200, 326),
-            new Goomba(1700, 326)
-        ];
-
-        coinsList = [
-            new Coin(220, 220),
-            new Coin(250, 220),
-            new Coin(370, 160),
-            new Coin(400, 160),
-            new Coin(920, 220),
-            new Coin(950, 220),
-            new Coin(1120, 170),
-            new Coin(1820, 200),
-            new Coin(1860, 200)
-        ];
-    }
-
-    function checkRectCollision(rect1, rect2) {
-        return (
-            rect1.x < rect2.x + rect2.width &&
-            rect1.x + rect1.width > rect2.x &&
-            rect1.y < rect2.y + rect2.height &&
-            rect1.y + rect1.height > rect2.y
-        );
-    }
-
-    function playerDeath() {
-        lives--;
-        livesElem.innerText = lives;
-        if (lives <= 0) {
-            gameOver = true;
+    // Live update screen as user types or pastes text
+    textInput.addEventListener('input', () => {
+        const value = textInput.value;
+        if (value.trim() === '') {
+            displayScreen.innerText = 'Enter lyrics or text below to display on terminal screen...';
         } else {
-            initLevel();
+            displayScreen.innerText = value;
         }
-    }
-
-    function update() {
-        if (gameOver || gameWon) return;
-
-        player.update(platforms);
-
-        // Keep camera centered on player
-        cameraX = Math.max(0, player.x - 300);
-
-        // Enemy collision and updates
-        for (let enemy of enemies) {
-            if (!enemy.alive) continue;
-            enemy.update(platforms);
-
-            if (checkRectCollision(player, enemy)) {
-                // Stomp Goomba
-                if (player.vy > 0 && player.y + player.height - player.vy <= enemy.y + 8) {
-                    enemy.alive = false;
-                    player.vy = -7;
-                    score += 100;
-                    scoreElem.innerText = String(score).padStart(6, '0');
-                } else {
-                    playerDeath();
-                }
-            }
-        }
-
-        // Coin collection
-        for (let coin of coinsList) {
-            if (!coin.collected && checkRectCollision(player, coin)) {
-                coin.collected = true;
-                coins++;
-                score += 200;
-                coinsElem.innerText = 'x' + String(coins).padStart(2, '0');
-                scoreElem.innerText = String(score).padStart(6, '0');
-            }
-        }
-
-        // Flagpole victory
-        if (checkRectCollision(player, flagPole)) {
-            gameWon = true;
-        }
-    }
-
-    function render() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Draw Platforms
-        for (let p of platforms) {
-            const drawX = p.x - cameraX;
-            ctx.fillStyle = '#e75910';
-            ctx.fillRect(drawX, p.y, p.width, p.height);
-            ctx.strokeStyle = '#000000';
-            ctx.strokeRect(drawX, p.y, p.width, p.height);
-        }
-
-        // Draw Coins
-        for (let coin of coinsList) {
-            coin.draw();
-        }
-
-        // Draw Enemies
-        for (let enemy of enemies) {
-            enemy.draw();
-        }
-
-        // Draw Flagpole
-        const flagDrawX = flagPole.x - cameraX;
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(flagDrawX, flagPole.y, flagPole.width, flagPole.height);
-        ctx.fillStyle = '#ff0033';
-        ctx.beginPath();
-        ctx.moveTo(flagDrawX, flagPole.y);
-        ctx.lineTo(flagDrawX - 30, flagPole.y + 15);
-        ctx.lineTo(flagDrawX, flagPole.y + 30);
-        ctx.fill();
-
-        // Draw Player
-        player.draw();
-
-        // Render Game Over or Win text
-        if (gameOver) {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#ff0033';
-            ctx.font = '20px "Press Start 2P"';
-            ctx.textAlign = 'center';
-            ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2);
-        } else if (gameWon) {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#00ff66';
-            ctx.font = '20px "Press Start 2P"';
-            ctx.textAlign = 'center';
-            ctx.fillText('STAGE CLEAR!', canvas.width / 2, canvas.height / 2);
-        }
-    }
-
-    function gameLoop() {
-        update();
-        render();
-        requestAnimationFrame(gameLoop);
-    }
-
-    window.addEventListener('keydown', (e) => {
-        if (['KeyA', 'ArrowLeft'].includes(e.code)) keys.left = true;
-        if (['KeyD', 'ArrowRight'].includes(e.code)) keys.right = true;
-        if (['KeyW', 'Space', 'ArrowUp'].includes(e.code)) keys.jump = true;
     });
 
-    window.addEventListener('keyup', (e) => {
-        if (['KeyA', 'ArrowLeft'].includes(e.code)) keys.left = false;
-        if (['KeyD', 'ArrowRight'].includes(e.code)) keys.right = false;
-        if (['KeyW', 'Space', 'ArrowUp'].includes(e.code)) keys.jump = false;
+    // Clear display button handler
+    clearBtn.addEventListener('click', () => {
+        textInput.value = '';
+        displayScreen.innerText = 'Enter lyrics or text below to display on terminal screen...';
+        textInput.focus();
     });
-
-    restartBtn.addEventListener('click', () => {
-        lives = 3;
-        score = 0;
-        coins = 0;
-        livesElem.innerText = lives;
-        coinsElem.innerText = 'x00';
-        scoreElem.innerText = '000000';
-        initLevel();
-    });
-
-    initLevel();
-    gameLoop();
 </script>
 
 </body>
