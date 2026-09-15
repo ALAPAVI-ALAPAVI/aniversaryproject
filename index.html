@@ -136,8 +136,8 @@
 
         .display-screen {
             width: 100%;
-            min-height: 200px;
-            max-height: 50vh;
+            min-height: 180px;
+            max-height: 40vh;
             background-color: #050206;
             border: 2px solid var(--pink-accent);
             padding: 15px;
@@ -261,7 +261,8 @@
         }
 
         .library-list {
-            max-height: 120px;
+            min-height: 60px;
+            max-height: 140px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
@@ -275,22 +276,21 @@
             align-items: center;
             background-color: rgba(22, 10, 24, 0.95);
             border: 1px solid var(--pink-accent);
-            padding: 6px 8px;
+            padding: 8px;
             font-size: 0.5rem;
             gap: 5px;
         }
 
         .library-item-title {
             color: var(--pink-bright);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            max-width: 140px;
+            word-break: break-word;
         }
 
         .library-item-pass {
             color: var(--pink-dim);
             font-size: 0.45rem;
+            display: block;
+            margin-top: 2px;
         }
 
         .library-actions {
@@ -300,7 +300,7 @@
         }
 
         .library-actions button {
-            padding: 4px 6px;
+            padding: 5px 7px;
             font-size: 0.45rem;
         }
 
@@ -367,7 +367,7 @@
             .library-actions {
                 width: 100%;
                 justify-content: flex-end;
-                margin-top: 4px;
+                margin-top: 6px;
             }
         }
     </style>
@@ -391,7 +391,7 @@
         <!-- VIEWER AUTH -->
         <div id="viewer-auth-page" class="view-section hidden">
             <h1>[VIEWER AUTHENTICATION]</h1>
-            <input type="password" id="viewer-pass-input" class="input-field" placeholder="ENTER LYRIC PASSWORD" autofocus autocomplete="off">
+            <input type="password" id="viewer-pass-input" class="input-field" placeholder="ENTER LYRIC PASSWORD" autocomplete="off">
             <div id="viewer-auth-error" class="error-msg hidden">ACCESS DENIED: INVALID PASSWORD</div>
             <div class="controls">
                 <button id="viewer-login-btn">CONNECT</button>
@@ -402,7 +402,7 @@
         <!-- ADMIN AUTH -->
         <div id="admin-auth-page" class="view-section hidden">
             <h1>[ADMIN AUTHENTICATION]</h1>
-            <input type="password" id="admin-pass-input" class="input-field" placeholder="ENTER ADMIN PASSWORD" autofocus autocomplete="off">
+            <input type="password" id="admin-pass-input" class="input-field" placeholder="ENTER ADMIN PASSWORD" autocomplete="off">
             <div id="admin-auth-error" class="error-msg hidden">ACCESS DENIED: INVALID PASSWORD</div>
             <div class="controls">
                 <button id="admin-login-btn">CONNECT</button>
@@ -560,17 +560,41 @@
         }
     }
 
+    function getICEConfig() {
+        return {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' },
+                { urls: 'stun:stun3.l.google.com:19302' },
+                { urls: 'stun:stun4.l.google.com:19302' },
+                {
+                    urls: 'turn:openrelay.metered.ca:80',
+                    username: 'openrelayproject',
+                    credential: 'openrelayproject'
+                },
+                {
+                    urls: 'turn:openrelay.metered.ca:443',
+                    username: 'openrelayproject',
+                    credential: 'openrelayproject'
+                },
+                {
+                    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+                    username: 'openrelayproject',
+                    credential: 'openrelayproject'
+                }
+            ]
+        };
+    }
+
     function initAdminPeer() {
-        if (peer) peer.destroy();
+        if (peer) {
+            try { peer.destroy(); } catch(e) {}
+        }
 
         peer = new Peer(ADMIN_PEER_ID, {
             debug: 1,
-            config: {
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' }
-                ]
-            }
+            config: getICEConfig()
         });
 
         peer.on('open', (id) => {
@@ -606,7 +630,7 @@
         localStorage.setItem("retro_lyric_broadcast", JSON.stringify(data));
         
         adminConnections.forEach(conn => {
-            if (conn.open) {
+            if (conn && conn.open) {
                 conn.send({ type: 'LYRIC_UPDATE', data: data });
             }
         });
@@ -615,20 +639,20 @@
     }
 
     function initViewerPeer(enteredPass) {
-        if (peer) peer.destroy();
+        if (peer) {
+            try { peer.destroy(); } catch(e) {}
+        }
 
         peer = new Peer({
-            config: {
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' }
-                ]
-            }
+            debug: 1,
+            config: getICEConfig()
         });
 
         peer.on('open', () => {
             viewerStatusText.innerText = "NETWORK: CONNECTING TO HOST...";
-            viewerConnection = peer.connect(ADMIN_PEER_ID);
+            viewerConnection = peer.connect(ADMIN_PEER_ID, {
+                reliable: true
+            });
 
             viewerConnection.on('open', () => {
                 viewerStatusText.innerText = "NETWORK: STREAM LIVE";
@@ -682,8 +706,12 @@
     }
 
     function getLibrary() {
-        const saved = localStorage.getItem(LIBRARY_KEY);
-        return saved ? JSON.parse(saved) : [];
+        try {
+            const saved = localStorage.getItem(LIBRARY_KEY);
+            return saved ? JSON.parse(saved) : [];
+        } catch(e) {
+            return [];
+        }
     }
 
     function saveLibrary(library) {
@@ -695,25 +723,50 @@
         const library = getLibrary();
         libraryList.innerHTML = '';
 
-        if (library.length === 0) {
-            libraryList.innerHTML = '<div style="font-size:0.45rem; color:var(--pink-dim); text-align:center;">NO SAVED LYRICS IN LIBRARY</div>';
+        if (!library || library.length === 0) {
+            libraryList.innerHTML = '<div style="font-size:0.45rem; color:var(--pink-dim); text-align:center; padding: 10px;">NO SAVED LYRICS IN LIBRARY</div>';
             return;
         }
 
         library.forEach((item, index) => {
             const div = document.createElement('div');
             div.className = 'library-item';
-            div.innerHTML = `
-                <div>
-                    <span class="library-item-title">${item.title}</span>
-                    <span class="library-item-pass">[PASS: ${item.password || 'NONE'}]</span>
-                </div>
-                <div class="library-actions">
-                    <button onclick="loadLibraryItem(${index})">LOAD</button>
-                    <button onclick="showQrModalForPass('${item.password || ''}')">QR</button>
-                    <button onclick="deleteLibraryItem(${index})">DEL</button>
-                </div>
-            `;
+            
+            const infoDiv = document.createElement('div');
+            
+            const titleSpan = document.createElement('span');
+            titleSpan.className = 'library-item-title';
+            titleSpan.textContent = item.title || 'UNTITLED';
+            
+            const passSpan = document.createElement('span');
+            passSpan.className = 'library-item-pass';
+            passSpan.textContent = '[PASS: ' + (item.password || 'NONE') + ']';
+            
+            infoDiv.appendChild(titleSpan);
+            infoDiv.appendChild(passSpan);
+
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'library-actions';
+
+            const loadBtn = document.createElement('button');
+            loadBtn.textContent = 'LOAD';
+            loadBtn.onclick = () => loadLibraryItem(index);
+
+            const qrBtn = document.createElement('button');
+            qrBtn.textContent = 'QR';
+            qrBtn.onclick = () => showQrModalForPass(item.password || '');
+
+            const delBtn = document.createElement('button');
+            delBtn.textContent = 'DEL';
+            delBtn.onclick = () => deleteLibraryItem(index);
+
+            actionsDiv.appendChild(loadBtn);
+            actionsDiv.appendChild(qrBtn);
+            actionsDiv.appendChild(delBtn);
+
+            div.appendChild(infoDiv);
+            div.appendChild(actionsDiv);
+
             libraryList.appendChild(div);
         });
     }
@@ -722,9 +775,9 @@
         const library = getLibrary();
         const item = library[index];
         if (item) {
-            songTitleInput.value = item.title;
+            songTitleInput.value = item.title || '';
             songPassInput.value = item.password || '';
-            adminTextInput.value = item.text;
+            adminTextInput.value = item.text || '';
         }
     };
 
@@ -783,7 +836,6 @@
         viewerAuthPage.classList.remove('hidden');
         viewerPassInput.value = '';
         viewerAuthError.classList.add('hidden');
-        viewerPassInput.focus();
     });
 
     selectAdminBtn.addEventListener('click', () => {
@@ -791,7 +843,6 @@
         adminAuthPage.classList.remove('hidden');
         adminPassInput.value = '';
         adminAuthError.classList.add('hidden');
-        adminPassInput.focus();
     });
 
     viewerBackBtn.addEventListener('click', () => {
@@ -818,9 +869,11 @@
 
             const savedLocal = localStorage.getItem("retro_lyric_broadcast");
             if (savedLocal) {
-                currentBroadcastData = JSON.parse(savedLocal);
-                adminTextInput.value = currentBroadcastData.text || "";
-                songPassInput.value = currentBroadcastData.password || "";
+                try {
+                    currentBroadcastData = JSON.parse(savedLocal);
+                    adminTextInput.value = currentBroadcastData.text || "";
+                    songPassInput.value = currentBroadcastData.password || "";
+                } catch(e) {}
             }
             renderBroadcast(currentBroadcastData);
         } else {
@@ -830,14 +883,18 @@
 
     viewerLogoutBtn.addEventListener('click', () => {
         clearInterval(viewerTypeInterval);
-        if (peer) peer.destroy();
+        if (peer) {
+            try { peer.destroy(); } catch(e) {}
+        }
         hideAllPages();
         rolePage.classList.remove('hidden');
     });
 
     adminLogoutBtn.addEventListener('click', () => {
         clearInterval(adminTypeInterval);
-        if (peer) peer.destroy();
+        if (peer) {
+            try { peer.destroy(); } catch(e) {}
+        }
         hideAllPages();
         rolePage.classList.remove('hidden');
     });
@@ -858,6 +915,8 @@
     });
 
     window.addEventListener('DOMContentLoaded', () => {
+        renderLibrary();
+
         const urlParams = new URLSearchParams(window.location.search);
         const passParam = urlParams.get('pass');
         if (passParam !== null) {
@@ -869,6 +928,9 @@
         if (e.key === "retro_lyric_broadcast") {
             const data = e.newValue ? JSON.parse(e.newValue) : null;
             renderBroadcast(data);
+        }
+        if (e.key === LIBRARY_KEY) {
+            renderLibrary();
         }
     });
 </script>
