@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel Speed Typer</title>
+    <title>Pixel Ship Destroyer</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -15,8 +15,6 @@
             --text-main: #ff4d4d;
             --text-dim: #881111;
             --glow-red: 0 0 10px rgba(255, 0, 51, 0.8), 0 0 20px rgba(255, 0, 51, 0.4);
-            --correct-color: #ff3333;
-            --incorrect-bg: #880000;
         }
 
         * {
@@ -35,7 +33,7 @@
             margin: 0;
             padding: 20px;
             position: relative;
-            overflow-x: hidden;
+            overflow: hidden;
         }
 
         /* CRT Scanline Effect */
@@ -52,7 +50,7 @@
 
         .container {
             background-color: var(--card-bg);
-            padding: 25px;
+            padding: 20px;
             border: 4px solid var(--border-red);
             box-shadow: var(--glow-red), inset 0 0 15px rgba(255, 0, 51, 0.3);
             max-width: 800px;
@@ -65,23 +63,22 @@
         }
 
         h1 {
-            margin-top: 0;
-            font-size: 1.5rem;
+            margin: 0 0 15px 0;
+            font-size: 1.3rem;
             color: var(--border-red);
             text-shadow: var(--glow-red);
             text-align: center;
             letter-spacing: 2px;
-            margin-bottom: 25px;
         }
 
         .stats-bar {
             display: flex;
             justify-content: space-around;
             width: 100%;
-            margin-bottom: 25px;
+            margin-bottom: 15px;
             background-color: #080000;
             border: 2px solid var(--dark-red);
-            padding: 15px;
+            padding: 10px;
         }
 
         .stat-item {
@@ -89,65 +86,97 @@
         }
 
         .stat-value {
-            font-size: 1.2rem;
+            font-size: 1rem;
             font-weight: bold;
             color: var(--border-red);
             text-shadow: var(--glow-red);
-            margin-bottom: 8px;
+            margin-bottom: 5px;
         }
 
         .stat-label {
-            font-size: 0.55rem;
+            font-size: 0.5rem;
             color: var(--text-dim);
             text-transform: uppercase;
         }
 
-        .text-display {
-            font-size: 0.85rem;
-            line-height: 1.8;
-            margin-bottom: 20px;
+        #game-screen {
+            width: 100%;
+            height: 380px;
             background-color: #000000;
             border: 2px solid var(--dark-red);
-            padding: 20px;
-            width: 100%;
-            word-wrap: break-word;
-            min-height: 120px;
-            user-select: none;
-            color: var(--text-dim);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 15px;
         }
 
-        .correct {
+        .enemy-ship {
+            position: absolute;
+            color: var(--bright-red);
+            font-size: 0.75rem;
+            white-space: nowrap;
+            text-shadow: var(--glow-red);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform: translateX(-50%);
+        }
+
+        .enemy-ship::before {
+            content: "<V>";
+            font-weight: bold;
+            color: #ff0033;
+            margin-bottom: 2px;
+        }
+
+        .matched {
             color: #ffffff;
-            text-shadow: 0 0 5px #ffffff, 0 0 10px var(--border-red);
+            text-shadow: 0 0 8px #ffffff;
         }
 
-        .incorrect {
-            color: #ff3333;
-            background-color: var(--incorrect-bg);
+        #player-ship {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ffffff;
+            font-size: 1.2rem;
+            text-shadow: var(--glow-red);
+            transition: left 0.1s ease-out;
         }
 
-        .current {
+        .laser {
+            position: absolute;
+            width: 4px;
             background-color: var(--border-red);
-            color: #000000 !important;
-            animation: pixel-blink 0.8s infinite;
+            box-shadow: var(--glow-red);
+            transform: translateX(-50%);
         }
 
-        @keyframes pixel-blink {
-            0%, 49% { background-color: var(--border-red); color: #000; }
-            50%, 100% { background-color: transparent; color: var(--text-main); }
+        .explosion {
+            position: absolute;
+            color: #ffffff;
+            font-size: 1.5rem;
+            transform: translate(-50%, -50%);
+            animation: explode 0.3s forwards;
+        }
+
+        @keyframes explode {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
         }
 
         .typing-input {
             width: 100%;
-            padding: 15px;
+            padding: 12px;
             font-family: 'Press Start 2P', monospace;
             font-size: 0.8rem;
             border: 2px solid var(--dark-red);
             background-color: #000000;
             color: var(--border-red);
             outline: none;
-            margin-bottom: 25px;
+            margin-bottom: 15px;
             box-shadow: inset 0 0 8px rgba(255, 0, 51, 0.3);
+            text-align: center;
         }
 
         .typing-input:focus {
@@ -155,16 +184,10 @@
             box-shadow: var(--glow-red);
         }
 
-        .controls {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
         button {
             font-family: 'Press Start 2P', monospace;
-            padding: 12px 20px;
-            font-size: 0.7rem;
+            padding: 10px 18px;
+            font-size: 0.65rem;
             border: 2px solid var(--border-red);
             background-color: var(--dark-red);
             color: #ffffff;
@@ -183,241 +206,245 @@
             box-shadow: 1px 1px 0px #000;
         }
 
-        .keyboard {
+        .game-over-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(5, 0, 0, 0.9);
             display: flex;
             flex-direction: column;
-            gap: 6px;
-            width: 100%;
-            max-width: 650px;
-        }
-
-        .keyboard-row {
-            display: flex;
             justify-content: center;
-            gap: 6px;
+            align-items: center;
+            z-index: 50;
         }
 
-        .key {
-            background-color: #080000;
-            border: 1px solid var(--dark-red);
-            color: var(--text-dim);
-            padding: 10px;
-            font-size: 0.6rem;
-            min-width: 28px;
-            text-align: center;
-        }
-
-        .key.space {
-            width: 180px;
-        }
-
-        .key.active {
-            background-color: var(--border-red);
-            color: #000000;
-            border-color: #ffffff;
-            box-shadow: var(--glow-red);
+        .game-over-title {
+            color: var(--border-red);
+            text-shadow: var(--glow-red);
+            font-size: 1.2rem;
+            margin-bottom: 15px;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>[PIXEL_TYPER]</h1>
+    <h1>[SHIP_DESTROYER]</h1>
 
     <div class="stats-bar">
         <div class="stat-item">
-            <div id="timer" class="stat-value">60</div>
-            <div class="stat-label">TIME LEFT</div>
+            <div id="score" class="stat-value">0</div>
+            <div class="stat-label">SCORE</div>
+        </div>
+        <div class="stat-item">
+            <div id="health" class="stat-value">100%</div>
+            <div class="stat-label">HULL INTEGRITY</div>
         </div>
         <div class="stat-item">
             <div id="wpm" class="stat-value">0</div>
             <div class="stat-label">WPM</div>
         </div>
-        <div class="stat-item">
-            <div id="accuracy" class="stat-value">100%</div>
-            <div class="stat-label">ACCURACY</div>
+    </div>
+
+    <div id="game-screen">
+        <div id="player-ship">A/\A</div>
+        <div id="overlay" class="game-over-overlay" style="display: none;">
+            <div id="overlay-title" class="game-over-title">SHIP DESTROYED</div>
+            <button onclick="startGame()">RESTART MISSION</button>
         </div>
     </div>
 
-    <div id="text-display" class="text-display"></div>
+    <input type="text" id="typing-input" class="typing-input" placeholder="TYPE WORD TO DESTROY..." autofocus autocomplete="off" spellcheck="false">
 
-    <input type="text" id="typing-input" class="typing-input" placeholder="TYPE HERE TO START..." autofocus autocomplete="off" spellcheck="false">
-
-    <div class="controls">
-        <button id="restart-btn">RESTART SYSTEM</button>
-    </div>
-
-    <div class="keyboard" id="keyboard">
-        <div class="keyboard-row">
-            <div class="key" data-key="q">Q</div>
-            <div class="key" data-key="w">W</div>
-            <div class="key" data-key="e">E</div>
-            <div class="key" data-key="r">R</div>
-            <div class="key" data-key="t">T</div>
-            <div class="key" data-key="y">Y</div>
-            <div class="key" data-key="u">U</div>
-            <div class="key" data-key="i">I</div>
-            <div class="key" data-key="o">O</div>
-            <div class="key" data-key="p">P</div>
-        </div>
-        <div class="keyboard-row">
-            <div class="key" data-key="a">A</div>
-            <div class="key" data-key="s">S</div>
-            <div class="key" data-key="d">D</div>
-            <div class="key" data-key="f">F</div>
-            <div class="key" data-key="g">G</div>
-            <div class="key" data-key="h">H</div>
-            <div class="key" data-key="j">J</div>
-            <div class="key" data-key="k">K</div>
-            <div class="key" data-key="l">L</div>
-        </div>
-        <div class="keyboard-row">
-            <div class="key" data-key="z">Z</div>
-            <div class="key" data-key="x">X</div>
-            <div class="key" data-key="c">C</div>
-            <div class="key" data-key="v">V</div>
-            <div class="key" data-key="b">B</div>
-            <div class="key" data-key="n">N</div>
-            <div class="key" data-key="m">M</div>
-        </div>
-        <div class="keyboard-row">
-            <div class="key space" data-key=" ">SPACE</div>
-        </div>
-    </div>
+    <button id="start-btn">START MISSION</button>
 </div>
 
 <script>
-    const sampleParagraphs = [
-        "System breach detected. Initialize countermeasures immediately. Type fast to overwrite corrupt data streams and secure the system.",
-        "Retro arcade gaming relies on precise timing and memory management. Pixel graphics combined with fast execution creates timeless retro experiences.",
-        "Compilation standard set to C23. Run static code checks and memory sanitizers before executing binary files on local target machines."
+    const wordList = [
+        "laser", "destroy", "vector", "attack", "matrix", "shield", "orbit", 
+        "nexus", "kernel", "binary", "system", "signal", "photon", "cyborg",
+        "plasma", "rocket", "runner", "danger", "target", "render", "deploy",
+        "module", "struct", "memory", "buffer", "static", "vector", "compile"
     ];
 
-    let timer = 60;
-    let timerInterval = null;
+    let score = 0;
+    let health = 100;
+    let totalTypedWords = 0;
+    let startTime = null;
+    let enemies = [];
+    let gameLoopInterval = null;
+    let spawnInterval = null;
     let isPlaying = false;
-    let totalTyped = 0;
-    let correctTyped = 0;
-    let currentText = "";
 
-    const textDisplay = document.getElementById('text-display');
+    const gameScreen = document.getElementById('game-screen');
+    const playerShip = document.getElementById('player-ship');
     const typingInput = document.getElementById('typing-input');
-    const timerElement = document.getElementById('timer');
+    const scoreElement = document.getElementById('score');
+    const healthElement = document.getElementById('health');
     const wpmElement = document.getElementById('wpm');
-    const accuracyElement = document.getElementById('accuracy');
-    const restartBtn = document.getElementById('restart-btn');
-
-    function initGame() {
-        clearInterval(timerInterval);
-        timer = 60;
-        isPlaying = false;
-        totalTyped = 0;
-        correctTyped = 0;
-        
-        timerElement.innerText = timer;
-        wpmElement.innerText = '0';
-        accuracyElement.innerText = '100%';
-        typingInput.value = '';
-        typingInput.disabled = false;
-
-        currentText = sampleParagraphs[Math.floor(Math.random() * sampleParagraphs.length)];
-        textDisplay.innerHTML = '';
-
-        currentText.split('').forEach((char, index) => {
-            const span = document.createElement('span');
-            span.innerText = char;
-            if (index === 0) span.classList.add('current');
-            textDisplay.appendChild(span);
-        });
-
-        typingInput.focus();
-    }
+    const overlay = document.getElementById('overlay');
+    const overlayTitle = document.getElementById('overlay-title');
+    const startBtn = document.getElementById('start-btn');
 
     function startGame() {
+        clearInterval(gameLoopInterval);
+        clearInterval(spawnInterval);
+
+        // Clear existing enemy elements
+        enemies.forEach(e => e.element.remove());
+        enemies = [];
+
+        score = 0;
+        health = 100;
+        totalTypedWords = 0;
+        startTime = Date.now();
         isPlaying = true;
-        timerInterval = setInterval(() => {
-            timer--;
-            timerElement.innerText = timer;
-            calculateStats();
 
-            if (timer <= 0) {
-                endGame();
-            }
-        }, 1000);
-    }
-
-    function endGame() {
-        clearInterval(timerInterval);
-        isPlaying = false;
-        typingInput.disabled = true;
+        scoreElement.innerText = score;
+        healthElement.innerText = health + '%';
+        wpmElement.innerText = '0';
+        overlay.style.display = 'none';
         typingInput.value = '';
-        textDisplay.innerHTML = `<span style="color: var(--border-red); text-shadow: var(--glow-red);">[SYSTEM OVERRIDE COMPLETE]</span><br><br>FINAL WPM: ${wpmElement.innerText} | ACCURACY: ${accuracyElement.innerText}`;
+        typingInput.disabled = false;
+        typingInput.focus();
+
+        gameLoopInterval = setInterval(updateGame, 50);
+        spawnInterval = setInterval(spawnEnemy, 2000);
     }
 
-    function calculateStats() {
-        const timeElapsed = 60 - timer;
-        if (timeElapsed > 0) {
-            const wpm = Math.round((correctTyped / 5) / (timeElapsed / 60));
-            wpmElement.innerText = wpm >= 0 ? wpm : 0;
+    function spawnEnemy() {
+        if (!isPlaying) return;
+
+        const word = wordList[Math.floor(Math.random() * wordList.length)];
+        const xPos = Math.floor(Math.random() * (gameScreen.clientWidth - 100)) + 50;
+
+        const enemyElem = document.createElement('div');
+        enemyElem.classList.add('enemy-ship');
+        enemyElem.style.left = xPos + 'px';
+        enemyElem.style.top = '0px';
+        enemyElem.innerHTML = `<span>${word}</span>`;
+
+        gameScreen.appendChild(enemyElem);
+
+        enemies.push({
+            word: word,
+            x: xPos,
+            y: 0,
+            speed: 1.5 + Math.random() * 1.0,
+            element: enemyElem
+        });
+    }
+
+    function updateGame() {
+        if (!isPlaying) return;
+
+        const targetY = gameScreen.clientHeight - 40;
+
+        for (let i = enemies.length - 1; i >= 0; i--) {
+            const enemy = enemies[i];
+            enemy.y += enemy.speed;
+            enemy.element.style.top = enemy.y + 'px';
+
+            // Enemy reaches ship
+            if (enemy.y >= targetY) {
+                createExplosion(enemy.x, enemy.y);
+                enemy.element.remove();
+                enemies.splice(i, 1);
+                
+                health -= 20;
+                healthElement.innerText = Math.max(0, health) + '%';
+
+                if (health <= 0) {
+                    endGame(false);
+                }
+            }
         }
 
-        const accuracy = totalTyped > 0 ? Math.round((correctTyped / totalTyped) * 100) : 100;
-        accuracyElement.innerText = `${accuracy}%`;
+        updateWPM();
+    }
+
+    function updateWPM() {
+        if (!startTime) return;
+        const elapsedMinutes = (Date.now() - startTime) / 60000;
+        if (elapsedMinutes > 0) {
+            const wpm = Math.round(totalTypedWords / elapsedMinutes);
+            wpmElement.innerText = wpm;
+        }
+    }
+
+    function fireLaser(targetX, targetY, callback) {
+        const playerX = playerShip.offsetLeft + (playerShip.clientWidth / 2);
+        playerShip.style.left = targetX + 'px';
+
+        const laser = document.createElement('div');
+        laser.classList.add('laser');
+        laser.style.left = targetX + 'px';
+        laser.style.bottom = '30px';
+        laser.style.height = (gameScreen.clientHeight - targetY - 30) + 'px';
+
+        gameScreen.appendChild(laser);
+
+        setTimeout(() => {
+            laser.remove();
+            if (callback) callback();
+        }, 100);
+    }
+
+    function createExplosion(x, y) {
+        const exp = document.createElement('div');
+        exp.classList.add('explosion');
+        exp.innerText = '*#*';
+        exp.style.left = x + 'px';
+        exp.style.top = y + 'px';
+        gameScreen.appendChild(exp);
+        setTimeout(() => exp.remove(), 300);
+    }
+
+    function endGame(victory) {
+        isPlaying = false;
+        clearInterval(gameLoopInterval);
+        clearInterval(spawnInterval);
+
+        typingInput.disabled = true;
+        overlay.style.display = 'flex';
+        overlayTitle.innerText = victory ? "MISSION ACCOMPLISHED" : "SHIP DESTROYED";
     }
 
     typingInput.addEventListener('input', () => {
-        if (!isPlaying && typingInput.value.length > 0) {
-            startGame();
-        }
+        if (!isPlaying) return;
 
-        const inputChars = typingInput.value.split('');
-        const spanArray = textDisplay.querySelectorAll('span');
-        correctTyped = 0;
-        totalTyped = inputChars.length;
+        const currentInput = typingInput.value.trim().toLowerCase();
 
-        spanArray.forEach((span, index) => {
-            const char = inputChars[index];
-
-            span.classList.remove('current', 'correct', 'incorrect');
-
-            if (char == null) {
-                if (index === inputChars.length) {
-                    span.classList.add('current');
-                }
-            } else if (char === span.innerText) {
-                span.classList.add('correct');
-                correctTyped++;
+        // Highlight matching prefixes
+        enemies.forEach(enemy => {
+            if (enemy.word.startsWith(currentInput) && currentInput.length > 0) {
+                const matched = enemy.word.substring(0, currentInput.length);
+                const remaining = enemy.word.substring(currentInput.length);
+                enemy.element.querySelector('span').innerHTML = `<span class="matched">${matched}</span>${remaining}`;
             } else {
-                span.classList.add('incorrect');
+                enemy.element.querySelector('span').innerText = enemy.word;
             }
         });
 
-        calculateStats();
+        // Check for complete word match
+        const matchedIndex = enemies.findIndex(enemy => enemy.word === currentInput);
 
-        if (inputChars.length >= currentText.length) {
-            endGame();
+        if (matchedIndex !== -1) {
+            const targetEnemy = enemies[matchedIndex];
+            
+            fireLaser(targetEnemy.x, targetEnemy.y, () => {
+                createExplosion(targetEnemy.x, targetEnemy.y);
+                targetEnemy.element.remove();
+                enemies.splice(matchedIndex, 1);
+
+                score += 100;
+                totalTypedWords++;
+                scoreElement.innerText = score;
+                typingInput.value = '';
+            });
         }
     });
 
-    window.addEventListener('keydown', (e) => {
-        const key = e.key.toLowerCase();
-        const keyElement = document.querySelector(`.key[data-key="${key}"]`);
-        if (keyElement) {
-            keyElement.classList.add('active');
-        }
-    });
-
-    window.addEventListener('keyup', (e) => {
-        const key = e.key.toLowerCase();
-        const keyElement = document.querySelector(`.key[data-key="${key}"]`);
-        if (keyElement) {
-            keyElement.classList.remove('active');
-        }
-    });
-
-    restartBtn.addEventListener('click', initGame);
-
-    initGame();
+    startBtn.addEventListener('click', startGame);
 </script>
 
 </body>
