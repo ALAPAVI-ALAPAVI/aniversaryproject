@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pink Cyber Lyric Terminal</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root {
             --bg-dark: #0a050b;
@@ -297,6 +298,43 @@
             padding: 6px 10px;
             font-size: 0.55rem;
         }
+
+        /* QR Code Modal Styling */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(10, 5, 11, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-card {
+            background: var(--panel-bg);
+            border: 2px solid var(--pink-accent);
+            padding: 25px;
+            box-shadow: 0 0 25px var(--pink-glow);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 400px;
+            width: 90%;
+            clip-path: polygon(
+                0 0, 
+                calc(100% - 15px) 0, 100% 15px, 
+                100% 100%, 
+                15px 100%, 0 calc(100% - 15px)
+            );
+        }
+
+        .qr-wrapper {
+            background: #ffffff;
+            padding: 15px;
+            border: 3px solid var(--pink-accent);
+            margin: 15px 0;
+            box-shadow: 0 0 10px var(--pink-glow);
+        }
     </style>
 </head>
 <body>
@@ -363,6 +401,7 @@
                 <div class="controls" style="margin-top: 5px;">
                     <button id="save-library-btn">SAVE TO LIBRARY</button>
                     <button id="broadcast-btn">BROADCAST LYRICS</button>
+                    <button id="admin-qr-btn">SHARE QR CODE</button>
                     <button id="admin-clear-btn">CLEAR</button>
                 </div>
             </div>
@@ -372,6 +411,19 @@
             </div>
         </div>
 
+    </div>
+</div>
+
+<!-- QR CODE MODAL -->
+<div id="qr-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+        <h1 style="font-size: 0.8rem; margin: 0;">[VIEWER QR LINK]</h1>
+        <p style="font-size: 0.55rem; color: var(--text-main); margin-top: 8px; text-align: center;" id="qr-modal-info">SCAN TO AUTO-AUTHENTICATE</p>
+        <div class="qr-wrapper">
+            <div id="qrcode"></div>
+        </div>
+        <p style="font-size: 0.55rem; color: var(--pink-bright); margin-bottom: 15px;" id="qr-pass-label">PASS: NONE</p>
+        <button id="close-qr-btn">CLOSE</button>
     </div>
 </div>
 
@@ -392,6 +444,13 @@
     const adminAuthPage = document.getElementById('admin-auth-page');
     const viewerUi = document.getElementById('viewer-ui');
     const adminUi = document.getElementById('admin-ui');
+
+    // QR Modal Elements
+    const qrModal = document.getElementById('qr-modal');
+    const qrContainer = document.getElementById('qrcode');
+    const qrPassLabel = document.getElementById('qr-pass-label');
+    const closeQrBtn = document.getElementById('close-qr-btn');
+    const adminQrBtn = document.getElementById('admin-qr-btn');
 
     // Inputs & Controls
     const selectViewerBtn = document.getElementById('select-viewer-btn');
@@ -499,6 +558,7 @@
                 </div>
                 <div class="library-actions">
                     <button onclick="loadLibraryItem(${index})">LOAD</button>
+                    <button onclick="showQrModalForPass('${item.password || ''}')">QR</button>
                     <button onclick="deleteLibraryItem(${index})">DELETE</button>
                 </div>
             `;
@@ -521,6 +581,36 @@
         library.splice(index, 1);
         saveLibrary(library);
     };
+
+    // QR Code Modal Generation
+    function showQrModalForPass(password) {
+        qrContainer.innerHTML = '';
+        const baseUrl = window.location.origin + window.location.pathname;
+        const viewerUrl = baseUrl + '?pass=' + encodeURIComponent(password);
+
+        new QRCode(qrContainer, {
+            text: viewerUrl,
+            width: 160,
+            height: 160,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+
+        qrPassLabel.innerText = 'PASS: ' + (password || 'NONE');
+        qrModal.classList.remove('hidden');
+    }
+
+    window.showQrModalForPass = showQrModalForPass;
+
+    adminQrBtn.addEventListener('click', () => {
+        const password = songPassInput.value.trim();
+        showQrModalForPass(password);
+    });
+
+    closeQrBtn.addEventListener('click', () => {
+        qrModal.classList.add('hidden');
+    });
 
     saveLibraryBtn.addEventListener('click', () => {
         const title = songTitleInput.value.trim() || 'UNTITLED';
@@ -565,8 +655,7 @@
     });
 
     // Auth Handlers
-    viewerLoginBtn.addEventListener('click', () => {
-        const enteredPass = viewerPassInput.value.trim();
+    function authenticateViewer(enteredPass) {
         const broadcastData = getBroadcastData();
 
         if (broadcastData && broadcastData.password) {
@@ -574,18 +663,26 @@
                 hideAllPages();
                 viewerUi.classList.remove('hidden');
                 renderBroadcast(broadcastData);
+                return true;
             } else {
                 viewerAuthError.classList.remove('hidden');
+                return false;
             }
         } else {
             if (enteredPass === "viewer" || !broadcastData || !broadcastData.password) {
                 hideAllPages();
                 viewerUi.classList.remove('hidden');
                 renderBroadcast(broadcastData || { text: "Awaiting broadcast stream..." });
+                return true;
             } else {
                 viewerAuthError.classList.remove('hidden');
+                return false;
             }
         }
+    }
+
+    viewerLoginBtn.addEventListener('click', () => {
+        authenticateViewer(viewerPassInput.value.trim());
     });
 
     adminLoginBtn.addEventListener('click', () => {
@@ -633,6 +730,15 @@
         const defaultData = { text: 'Awaiting broadcast stream...', password: '' };
         localStorage.setItem(BROADCAST_KEY, JSON.stringify(defaultData));
         renderBroadcast(defaultData);
+    });
+
+    // Auto-login via QR Code Link URL parameter ?pass=...
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const passParam = urlParams.get('pass');
+        if (passParam !== null) {
+            authenticateViewer(passParam);
+        }
     });
 
     // Listen for storage updates across tabs/windows in real time
