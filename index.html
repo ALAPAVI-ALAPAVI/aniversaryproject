@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Pink Cyber Lyric Terminal</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -10,7 +10,7 @@
     <style>
         :root {
             --bg-dark: #0a050b;
-            --panel-bg: rgba(22, 10, 24, 0.92);
+            --panel-bg: rgba(22, 10, 24, 0.95);
             --pink-accent: #ff3b8d;
             --pink-bright: #ff66b3;
             --pink-glow: rgba(255, 59, 141, 0.6);
@@ -23,6 +23,7 @@
         * {
             box-sizing: border-box;
             image-rendering: pixelated;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -34,13 +35,13 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            padding: 20px;
+            padding: 10px;
             position: relative;
             overflow-x: hidden;
             background-image: 
                 linear-gradient(rgba(255, 59, 141, 0.07) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(255, 59, 141, 0.07) 1px, transparent 1px);
-            background-size: 30px 30px;
+            background-size: 20px 20px;
         }
 
         body::before {
@@ -56,15 +57,15 @@
 
         .cyber-wrapper {
             position: relative;
-            max-width: 900px;
             width: 100%;
+            max-width: 900px;
         }
 
         .cyber-wrapper::before, .cyber-wrapper::after {
             content: "";
             position: absolute;
-            width: 16px;
-            height: 16px;
+            width: 12px;
+            height: 12px;
             border: 3px solid var(--pink-bright);
             z-index: 20;
         }
@@ -74,7 +75,7 @@
 
         .container {
             background-color: var(--panel-bg);
-            padding: 30px;
+            padding: 20px 15px;
             border: 2px solid var(--pink-accent);
             box-shadow: 0 0 20px var(--pink-glow), inset 0 0 20px rgba(255, 59, 141, 0.15);
             width: 100%;
@@ -85,32 +86,32 @@
             z-index: 10;
             clip-path: polygon(
                 0 0, 
-                calc(100% - 20px) 0, 100% 20px, 
+                calc(100% - 15px) 0, 100% 15px, 
                 100% 100%, 
-                20px 100%, 0 calc(100% - 20px)
+                15px 100%, 0 calc(100% - 15px)
             );
         }
 
         .cyber-header-tab {
             position: absolute;
-            top: -15px;
+            top: -12px;
             background: var(--pink-accent);
             color: #000;
-            padding: 4px 15px;
-            font-size: 0.6rem;
-            letter-spacing: 2px;
+            padding: 3px 10px;
+            font-size: 0.5rem;
+            letter-spacing: 1px;
             font-weight: bold;
             box-shadow: 0 0 10px var(--pink-glow);
         }
 
         h1 {
             margin-top: 10px;
-            font-size: 1.1rem;
+            font-size: clamp(0.75rem, 4vw, 1.1rem);
             color: var(--pink-bright);
             text-shadow: 0 0 8px var(--pink-glow);
             text-align: center;
-            letter-spacing: 2px;
-            margin-bottom: 25px;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
         }
 
         .view-section {
@@ -126,31 +127,34 @@
 
         .role-selection {
             display: flex;
-            gap: 20px;
+            flex-direction: row;
+            gap: 15px;
             margin-bottom: 20px;
+            width: 100%;
+            justify-content: center;
         }
 
         .display-screen {
             width: 100%;
-            min-height: 220px;
-            max-height: 320px;
+            min-height: 200px;
+            max-height: 50vh;
             background-color: #050206;
             border: 2px solid var(--pink-accent);
-            padding: 20px;
+            padding: 15px;
             overflow-y: auto;
             white-space: pre-wrap;
             word-wrap: break-word;
-            font-size: 0.85rem;
+            font-size: clamp(0.7rem, 2.5vw, 0.85rem);
             line-height: 1.8;
             color: var(--text-bright);
             text-shadow: 0 0 5px var(--text-bright), 0 0 10px var(--pink-accent);
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             box-shadow: inset 0 0 15px rgba(255, 59, 141, 0.3);
             position: relative;
         }
 
         .display-screen::-webkit-scrollbar, .library-list::-webkit-scrollbar {
-            width: 8px;
+            width: 6px;
         }
 
         .display-screen::-webkit-scrollbar-track, .library-list::-webkit-scrollbar-track {
@@ -164,21 +168,21 @@
 
         .input-field {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             font-family: 'Press Start 2P', monospace;
-            font-size: 0.75rem;
+            font-size: 0.65rem;
             border: 2px solid var(--pink-dim);
             background-color: #080309;
             color: var(--pink-bright);
             outline: none;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             box-shadow: inset 0 0 8px rgba(255, 59, 141, 0.2);
             text-align: center;
             transition: all 0.2s;
         }
 
         .text-area-input {
-            height: 100px;
+            height: 90px;
             resize: vertical;
             text-align: left;
             line-height: 1.5;
@@ -195,75 +199,74 @@
 
         .controls {
             display: flex;
-            gap: 12px;
+            gap: 8px;
             margin-top: 10px;
             flex-wrap: wrap;
             justify-content: center;
+            width: 100%;
         }
 
         button {
             font-family: 'Press Start 2P', monospace;
-            padding: 12px 18px;
-            font-size: 0.65rem;
+            padding: 10px 14px;
+            font-size: 0.55rem;
             border: 2px solid var(--pink-accent);
             background-color: var(--pink-dim);
             color: #ffffff;
             cursor: pointer;
-            box-shadow: 3px 3px 0px #000;
+            box-shadow: 2px 2px 0px #000;
             transition: all 0.15s;
-            clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+            clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+            touch-action: manipulation;
         }
 
-        button:hover {
+        button:hover, button:active {
             background-color: var(--pink-accent);
-            box-shadow: 0 0 12px var(--pink-glow);
+            box-shadow: 0 0 10px var(--pink-glow);
             color: #000;
-        }
-
-        button:active {
-            transform: translate(2px, 2px);
-            box-shadow: 1px 1px 0px #000;
         }
 
         .section-title {
             align-self: flex-start;
-            font-size: 0.65rem;
+            font-size: 0.55rem;
             color: var(--pink-bright);
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
         .error-msg {
             color: #ff3366;
-            font-size: 0.65rem;
-            margin-bottom: 15px;
+            font-size: 0.55rem;
+            margin-bottom: 12px;
             text-align: center;
             text-shadow: 0 0 5px rgba(255, 51, 102, 0.8);
         }
 
         .status-tag {
-            font-size: 0.55rem;
+            font-size: 0.5rem;
             color: var(--pink-bright);
-            margin-bottom: 10px;
+            margin-bottom: 8px;
+            text-align: center;
+            word-break: break-word;
         }
 
         .library-container {
             width: 100%;
             border: 2px solid var(--pink-dim);
             background-color: #080309;
-            padding: 15px;
-            margin-bottom: 20px;
+            padding: 10px;
+            margin-bottom: 15px;
             box-shadow: inset 0 0 10px rgba(255, 59, 141, 0.15);
         }
 
         .library-list {
-            max-height: 150px;
+            max-height: 120px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            margin-bottom: 12px;
+            gap: 6px;
+            margin-bottom: 10px;
         }
 
         .library-item {
@@ -272,8 +275,9 @@
             align-items: center;
             background-color: rgba(22, 10, 24, 0.95);
             border: 1px solid var(--pink-accent);
-            padding: 8px 12px;
-            font-size: 0.6rem;
+            padding: 6px 8px;
+            font-size: 0.5rem;
+            gap: 5px;
         }
 
         .library-item-title {
@@ -281,59 +285,90 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            max-width: 230px;
+            max-width: 140px;
         }
 
         .library-item-pass {
             color: var(--pink-dim);
-            font-size: 0.55rem;
-            margin-left: 8px;
+            font-size: 0.45rem;
         }
 
         .library-actions {
             display: flex;
-            gap: 6px;
+            gap: 4px;
+            flex-shrink: 0;
         }
 
         .library-actions button {
-            padding: 6px 10px;
-            font-size: 0.55rem;
+            padding: 4px 6px;
+            font-size: 0.45rem;
         }
 
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(10, 5, 11, 0.9);
+            background: rgba(10, 5, 11, 0.92);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 1000;
+            padding: 15px;
         }
 
         .modal-card {
             background: var(--panel-bg);
             border: 2px solid var(--pink-accent);
-            padding: 25px;
+            padding: 20px;
             box-shadow: 0 0 25px var(--pink-glow);
             display: flex;
             flex-direction: column;
             align-items: center;
-            max-width: 400px;
-            width: 90%;
+            max-width: 360px;
+            width: 100%;
             clip-path: polygon(
                 0 0, 
-                calc(100% - 15px) 0, 100% 15px, 
+                calc(100% - 12px) 0, 100% 12px, 
                 100% 100%, 
-                15px 100%, 0 calc(100% - 15px)
+                12px 100%, 0 calc(100% - 12px)
             );
         }
 
         .qr-wrapper {
             background: #ffffff;
-            padding: 15px;
-            border: 3px solid var(--pink-accent);
-            margin: 15px 0;
+            padding: 10px;
+            border: 2px solid var(--pink-accent);
+            margin: 12px 0;
             box-shadow: 0 0 10px var(--pink-glow);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .qr-wrapper img, .qr-wrapper canvas {
+            max-width: 100%;
+            height: auto !important;
+        }
+
+        @media (max-width: 480px) {
+            .role-selection {
+                flex-direction: column;
+                width: 100%;
+            }
+            .role-selection button {
+                width: 100%;
+            }
+            .controls button {
+                flex: 1 1 calc(50% - 8px);
+            }
+            .library-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .library-actions {
+                width: 100%;
+                justify-content: flex-end;
+                margin-top: 4px;
+            }
         }
     </style>
 </head>
@@ -346,7 +381,7 @@
         <!-- ROLE SELECTION PAGE -->
         <div id="role-page" class="view-section">
             <h1>[PINK SOFT CYBER]</h1>
-            <p style="font-size: 0.65rem; margin-bottom: 25px; color: var(--text-main);">SELECT ACCESS TERMINAL</p>
+            <p style="font-size: 0.55rem; margin-bottom: 20px; color: var(--text-main); text-align: center;">SELECT ACCESS TERMINAL</p>
             <div class="role-selection">
                 <button id="select-viewer-btn">VIEWER</button>
                 <button id="select-admin-btn">ADMIN</button>
@@ -356,7 +391,7 @@
         <!-- VIEWER AUTH -->
         <div id="viewer-auth-page" class="view-section hidden">
             <h1>[VIEWER AUTHENTICATION]</h1>
-            <input type="password" id="viewer-pass-input" class="input-field" placeholder="ENTER LYRIC PASSWORD" autofocus>
+            <input type="password" id="viewer-pass-input" class="input-field" placeholder="ENTER LYRIC PASSWORD" autofocus autocomplete="off">
             <div id="viewer-auth-error" class="error-msg hidden">ACCESS DENIED: INVALID PASSWORD</div>
             <div class="controls">
                 <button id="viewer-login-btn">CONNECT</button>
@@ -367,7 +402,7 @@
         <!-- ADMIN AUTH -->
         <div id="admin-auth-page" class="view-section hidden">
             <h1>[ADMIN AUTHENTICATION]</h1>
-            <input type="password" id="admin-pass-input" class="input-field" placeholder="ENTER ADMIN PASSWORD" autofocus>
+            <input type="password" id="admin-pass-input" class="input-field" placeholder="ENTER ADMIN PASSWORD" autofocus autocomplete="off">
             <div id="admin-auth-error" class="error-msg hidden">ACCESS DENIED: INVALID PASSWORD</div>
             <div class="controls">
                 <button id="admin-login-btn">CONNECT</button>
@@ -397,8 +432,8 @@
             <div class="section-title">CYBER LYRIC LIBRARY:</div>
             <div class="library-container">
                 <div id="library-list" class="library-list"></div>
-                <input type="text" id="song-title-input" class="input-field" placeholder="TRACK / SONG TITLE" style="text-align: left; margin-bottom: 8px;">
-                <input type="text" id="song-pass-input" class="input-field" placeholder="ASSIGN VIEWER PASSWORD FOR THIS LYRIC" style="text-align: left; margin-bottom: 8px;">
+                <input type="text" id="song-title-input" class="input-field" placeholder="TRACK / SONG TITLE" style="text-align: left; margin-bottom: 6px;">
+                <input type="text" id="song-pass-input" class="input-field" placeholder="ASSIGN VIEWER PASSWORD FOR THIS LYRIC" style="text-align: left; margin-bottom: 6px;">
                 <textarea id="admin-text-input" class="input-field text-area-input" placeholder="PASTE OR TYPE LYRICS HERE..."></textarea>
                 <div class="controls" style="margin-top: 5px;">
                     <button id="save-library-btn">SAVE TO LIBRARY</button>
@@ -419,19 +454,19 @@
 <!-- QR CODE MODAL -->
 <div id="qr-modal" class="modal-overlay hidden">
     <div class="modal-card">
-        <h1 style="font-size: 0.8rem; margin: 0;">[VIEWER QR LINK]</h1>
-        <p style="font-size: 0.55rem; color: var(--text-main); margin-top: 8px; text-align: center;">SCAN TO CONNECT FROM ANY DEVICE</p>
+        <h1 style="font-size: 0.75rem; margin: 0;">[VIEWER QR LINK]</h1>
+        <p style="font-size: 0.45rem; color: var(--text-main); margin-top: 6px; text-align: center;">SCAN TO CONNECT FROM PHONE / TABLET / PC</p>
         <div class="qr-wrapper">
             <div id="qrcode"></div>
         </div>
-        <p style="font-size: 0.55rem; color: var(--pink-bright); margin-bottom: 15px;" id="qr-pass-label">PASS: NONE</p>
+        <p style="font-size: 0.5rem; color: var(--pink-bright); margin-bottom: 12px;" id="qr-pass-label">PASS: NONE</p>
         <button id="close-qr-btn">CLOSE</button>
     </div>
 </div>
 
 <script>
     const ADMIN_PASSWORD = "admin";
-    const TYPING_SPEED = 75;
+    const TYPING_SPEED = 60;
     const LIBRARY_KEY = "retro_lyric_library";
     const ADMIN_PEER_ID = "aniversaryproject-admin-host-998877";
 
@@ -528,7 +563,15 @@
     function initAdminPeer() {
         if (peer) peer.destroy();
 
-        peer = new Peer(ADMIN_PEER_ID, { debug: 1 });
+        peer = new Peer(ADMIN_PEER_ID, {
+            debug: 1,
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' }
+                ]
+            }
+        });
 
         peer.on('open', (id) => {
             adminStatusText.innerText = "BROADCAST SERVER: ONLINE";
@@ -549,7 +592,7 @@
 
         peer.on('error', (err) => {
             if (err.type === 'unavailable-id') {
-                adminStatusText.innerText = "BROADCAST SERVER: ACTIVE (CONNECTED)";
+                adminStatusText.innerText = "BROADCAST SERVER: ACTIVE (HOST)";
                 adminStatusText.style.color = "#00ffcc";
             } else {
                 adminStatusText.innerText = "BROADCAST SERVER: ERROR (" + err.type + ")";
@@ -574,7 +617,14 @@
     function initViewerPeer(enteredPass) {
         if (peer) peer.destroy();
 
-        peer = new Peer();
+        peer = new Peer({
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' }
+                ]
+            }
+        });
 
         peer.on('open', () => {
             viewerStatusText.innerText = "NETWORK: CONNECTING TO HOST...";
@@ -599,7 +649,7 @@
         });
 
         peer.on('error', (err) => {
-            viewerStatusText.innerText = "NETWORK: OFFLINE / LOCAL MODE";
+            viewerStatusText.innerText = "NETWORK: LOCAL / HYBRID MODE";
             const localData = localStorage.getItem("retro_lyric_broadcast");
             if (localData) {
                 checkAndApplyViewerAuth(enteredPass, JSON.parse(localData));
@@ -646,7 +696,7 @@
         libraryList.innerHTML = '';
 
         if (library.length === 0) {
-            libraryList.innerHTML = '<div style="font-size:0.55rem; color:var(--pink-dim); text-align:center;">NO SAVED LYRICS IN LIBRARY</div>';
+            libraryList.innerHTML = '<div style="font-size:0.45rem; color:var(--pink-dim); text-align:center;">NO SAVED LYRICS IN LIBRARY</div>';
             return;
         }
 
@@ -661,7 +711,7 @@
                 <div class="library-actions">
                     <button onclick="loadLibraryItem(${index})">LOAD</button>
                     <button onclick="showQrModalForPass('${item.password || ''}')">QR</button>
-                    <button onclick="deleteLibraryItem(${index})">DELETE</button>
+                    <button onclick="deleteLibraryItem(${index})">DEL</button>
                 </div>
             `;
             libraryList.appendChild(div);
@@ -691,8 +741,8 @@
 
         new QRCode(qrContainer, {
             text: viewerUrl,
-            width: 160,
-            height: 160,
+            width: 150,
+            height: 150,
             colorDark : "#000000",
             colorLight : "#ffffff",
             correctLevel : QRCode.CorrectLevel.H
