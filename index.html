@@ -422,8 +422,8 @@
   const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   if (!text){
-    if (node._timer) clearInterval(node._timer);
-    node._timer = null;
+    if (node._timer){ clearTimeout(node._timer);
+    node._timer = null; }
     node.textContent = EMPTY_TEXT;
     node.classList.add('empty-state');
     node._lastText = "";
@@ -454,20 +454,32 @@
   }
 
   const newChars = Array.from(text.slice(base.length));
-  node.textContent = base;
-  node._displayedText = base;
-  if (!newChars.length){ node._displayedText = text; return; }
+node.textContent = base;
+node._displayedText = base;
+if (!newChars.length){ node._displayedText = text; return; }
 
-  let i = 0;
- const totalDuration = Math.min(15000, Math.max(1200, newChars.length * 70));
- const stepTime = Math.max(35, totalDuration / newChars.length);
-  node._timer = setInterval(() => {
-    i++;
-    node.textContent = base + newChars.slice(0, i).join('');
-    node._displayedText = node.textContent;
-    node.scrollTop = node.scrollHeight;
-    if (i >= newChars.length){ clearInterval(node._timer); node._timer = null; }
-  }, stepTime);
+let i = 0;
+const totalDuration = Math.min(20000, Math.max(1500, newChars.length * 90));
+const stepTime = Math.max(45, totalDuration / newChars.length);
+const lineBreakPause = 380; // extra ms to hold after each newline
+
+function revealNext(){
+  i++;
+  node.textContent = base + newChars.slice(0, i).join('');
+  node._displayedText = node.textContent;
+  node.scrollTop = node.scrollHeight;
+
+  if (i >= newChars.length){
+    node._timer = null;
+    return;
+  }
+
+  const justRevealed = newChars[i - 1];
+  const delay = justRevealed === '\n' ? stepTime + lineBreakPause : stepTime;
+  node._timer = setTimeout(revealNext, delay);
+}
+
+revealNext();
 }
   // ---------- secure sync (via the /api routes) ----------
   // A dedicated error type so callers can tell "wrong password" apart from
