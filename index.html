@@ -27,19 +27,19 @@
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html,body{ height:100%; }
   body{
-    margin:0;
-    font-family:'Inter',sans-serif;
-    background:
-      radial-gradient(ellipse 900px 500px at 50% -8%, rgba(226,87,127,0.16), transparent 60%),
-      radial-gradient(ellipse 700px 500px at 100% 100%, rgba(176,68,90,0.10), transparent 55%),
-      var(--ink);
-    color:var(--paper);
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:24px 16px;
-  }
+  margin:0;
+  font-family:'Inter',sans-serif;
+  background:
+    radial-gradient(ellipse 900px 500px at 50% -8%, rgba(226,87,127,0.16), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 100% 100%, rgba(176,68,90,0.10), transparent 55%),
+    var(--ink);
+  color:var(--paper);
+  min-height:100vh;
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  padding:24px 16px;
+}
   .scene{ width:100%; max-width:960px; }
   .card{
     background:var(--panel);
@@ -155,6 +155,9 @@
   word-wrap:break-word;
   max-width:62ch;
   min-height:120px;
+  max-height:48vh;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
   padding-right:4px;
 }
 .letter.small-letter{ font-size:0.92rem; max-height:180px; min-height:70px; overflow-y:auto; color:var(--ash); }
