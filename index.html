@@ -459,8 +459,8 @@
   if (!newChars.length){ node._displayedText = text; return; }
 
   let i = 0;
-  const totalDuration = Math.min(1400, Math.max(250, newChars.length * 18));
-  const stepTime = Math.max(6, totalDuration / newChars.length);
+  const totalDuration = Math.min(6000, Math.max(600, newChars.length * 40));
+const stepTime = Math.max(18, totalDuration / newChars.length);
   node._timer = setInterval(() => {
     i++;
     node.textContent = base + newChars.slice(0, i).join('');
