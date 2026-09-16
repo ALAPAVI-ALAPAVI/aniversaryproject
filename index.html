@@ -418,43 +418,57 @@
   // arrived tail is animated in — so it reads as one unbroken stream rather
   // than retyping everything on every poll. A non-extending change (an edit
   // or a fresh letter) resets and retypes from the start.
-  function streamInto(node, text){
-    const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ function streamInto(node, text){
+  const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (!text){
     if (node._timer) clearInterval(node._timer);
-    node.classList.remove('empty-state');
-
-    if (!text){
-      node.textContent = EMPTY_TEXT;
-      node.classList.add('empty-state');
-      node._lastText = "";
-      return;
-    }
-    if (text === node._lastText) return;
-
-    const prev = node._lastText || "";
-    const isExtension = text.startsWith(prev) && prev.length > 0;
-    const base = isExtension ? prev : "";
-    node._lastText = text;
-
-    if (reduced){
-      node.textContent = text;
-      return;
-    }
-
-    const newChars = Array.from(text.slice(base.length));
-    node.textContent = base;
-    if (!newChars.length) return;
-    let i = 0;
-    const totalDuration = Math.min(1400, Math.max(250, newChars.length * 18));
-    const stepTime = Math.max(6, totalDuration / newChars.length);
-    node._timer = setInterval(() => {
-      i++;
-      node.textContent = base + newChars.slice(0, i).join('');
-      node.scrollTop = node.scrollHeight;
-      if (i >= newChars.length) clearInterval(node._timer);
-    }, stepTime);
+    node._timer = null;
+    node.textContent = EMPTY_TEXT;
+    node.classList.add('empty-state');
+    node._lastText = "";
+    node._displayedText = "";
+    return;
   }
 
+  if (text === node._lastText) return; // nothing new — leave any in-progress reveal alone to finish on its own
+
+  node.classList.remove('empty-state');
+
+  // What's actually rendered right now (may be mid-animation) — not
+  // necessarily the same as node._lastText, which is the last known target.
+  const shown = node._displayedText !== undefined
+    ? node._displayedText
+    : (node.textContent === EMPTY_TEXT ? "" : node.textContent);
+
+  if (node._timer){ clearInterval(node._timer); node._timer = null; }
+
+  const isExtension = text.startsWith(shown) && shown.length > 0;
+  const base = isExtension ? shown : "";
+  node._lastText = text;
+
+  if (reduced){
+    node.textContent = text;
+    node._displayedText = text;
+    return;
+  }
+
+  const newChars = Array.from(text.slice(base.length));
+  node.textContent = base;
+  node._displayedText = base;
+  if (!newChars.length){ node._displayedText = text; return; }
+
+  let i = 0;
+  const totalDuration = Math.min(1400, Math.max(250, newChars.length * 18));
+  const stepTime = Math.max(6, totalDuration / newChars.length);
+  node._timer = setInterval(() => {
+    i++;
+    node.textContent = base + newChars.slice(0, i).join('');
+    node._displayedText = node.textContent;
+    node.scrollTop = node.scrollHeight;
+    if (i >= newChars.length){ clearInterval(node._timer); node._timer = null; }
+  }, stepTime);
+}
   // ---------- secure sync (via the /api routes) ----------
   // A dedicated error type so callers can tell "wrong password" apart from
   // "network/server trouble" and react differently (show an auth error vs.
