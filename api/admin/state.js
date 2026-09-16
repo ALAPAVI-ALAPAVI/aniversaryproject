@@ -1,4 +1,4 @@
-import { getRoom, sha256, timingSafeEqual } from '../lib/room.js';
+import { getRoom, requireAdmin } from '../../lib/room.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'method_not_allowed' });
