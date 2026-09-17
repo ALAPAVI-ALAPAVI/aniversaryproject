@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Dear — a letter, streamed</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,340;0,9..144,480;0,9..144,600;1,9..144,480&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -25,7 +25,9 @@
     --radius-sm:3px;
   }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body{ height:100%; }
+html{ font-size:clamp(15px, 1.2vw + 11px, 17px); }
+html,body{ height:100%; }
+  
   body{
     margin:0;
     font-family:'Inter',sans-serif;
@@ -37,7 +39,7 @@
     display:flex;
     align-items:flex-start;
     justify-content:center;
-    padding:24px 16px;
+    padding:calc(24px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
   }
   .scene{ width:100%; max-width:960px; }
   .card{
@@ -157,7 +159,7 @@
   .admin-col > .section-h:first-child{ margin-top:0; }
 
   .admin-grid{ display:grid; grid-template-columns:1.15fr 1fr; gap:34px; }
-  @media (max-width:760px){ .admin-grid{ grid-template-columns:1fr; gap:8px; } }
+  @media (max-width:880px){ .admin-grid{ grid-template-columns:1fr; gap:8px; } }
 
   .replies{ display:flex; flex-direction:column; gap:8px; }
   .reply-item{ background:var(--panel-2); border:1px solid var(--line-soft); border-radius:var(--radius-sm); padding:10px 12px; }
@@ -197,6 +199,10 @@
     .row button{ width:100%; }
     .bottom-row{ justify-content:stretch; }
     .pass-row{ flex-direction:column; }
+  }
+    @media (max-width:380px){
+    .card{ padding:20px 14px; }
+    .display{ font-size:1.4rem; }
   }
   @media (prefers-reduced-motion:reduce){ *{ transition:none !important; } }
 </style>
