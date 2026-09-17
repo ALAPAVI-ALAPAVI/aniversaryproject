@@ -449,10 +449,10 @@ node._displayedText = base;
 if (!newChars.length){ node._displayedText = text; return; }
 
 let i = 0;
-const totalDuration = Math.min(25000, Math.max(1800, newChars.length * 120));
-const stepTime = Math.max(60, totalDuration / newChars.length);
-const lineBreakPause = 450; // extra ms to hold after each newline
-
+const totalDuration = Math.min(40000, Math.max(3000, newChars.length * 180));
+const stepTime = Math.max(90, totalDuration / newChars.length);
+const lineBreakPause = 650; // extra ms to hold after each newline
+   
 function revealNext(){
   i++;
   node.textContent = base + newChars.slice(0, i).join('');
